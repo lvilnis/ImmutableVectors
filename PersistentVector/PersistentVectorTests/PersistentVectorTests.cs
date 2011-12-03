@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using PersistentVectors;
+using PersistentVector;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Diagnostics;
 

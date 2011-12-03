@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace PersistentVectors
+namespace PersistentVector
 {
     // Port of Clojure's PersistentVector (by Rich Hickey) by way of Daniel Spiewak's Scala version
     internal class PrependableImmutableVector<T> : IVector<T>

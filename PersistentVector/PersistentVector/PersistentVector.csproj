@@ -8,8 +8,8 @@
     <ProjectGuid>{A6A3601C-072F-4D63-8937-94DC3EC71B40}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PersistentVectors</RootNamespace>
-    <AssemblyName>PersistentVectors</AssemblyName>
+    <RootNamespace>PersistentVector</RootNamespace>
+    <AssemblyName>PersistentVector</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
