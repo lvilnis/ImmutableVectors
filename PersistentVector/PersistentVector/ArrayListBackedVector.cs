@@ -5,7 +5,7 @@ using System.Text;
 
 namespace PersistentVectors
 {
-    class ArrayListBackedVector<T> : IVector<T>
+    internal class ArrayListBackedVector<T> : IVector<T>
     {
         private readonly IList<T> m_List;
         public ArrayListBackedVector(IList<T> list)
@@ -47,12 +47,12 @@ namespace PersistentVectors
             }
         }
 
-        IVector<T> IVector<T>.Append(T item)
+        IVector<T> IVector<T>.Append(T newItem)
         {
             var newList = new List<T>(m_List.Count + 1);
-            for (int i = 0; i < m_List.Count; i++)
-                newList[i] = m_List[i];
-            newList[m_List.Count + 1] = item;
+            foreach (var item in m_List)
+                newList.Add(item);
+            newList.Add(newItem);
             return new ArrayListBackedVector<T>(newList);
         }
 
@@ -72,20 +72,21 @@ namespace PersistentVectors
             }
         }
 
-        IVector<T> IVector<T>.Cons(T item)
+        IVector<T> IVector<T>.Cons(T newItem)
         {
             var newList = new List<T>(m_List.Count + 1);
-            newList[0] = item;
-            for (int i = 0; i < m_List.Count; i++)
-                newList.Add(m_List[i]);
+            newList.Add(newItem);
+            foreach (var item in m_List)
+                newList.Add(item);
             return new ArrayListBackedVector<T>(newList);
         }
 
-        IVector<T> IVector<T>.Concat(IEnumerable<T> items)
+        IVector<T> IVector<T>.Concat(IEnumerable<T> newItems)
         {
             var newList = new List<T>(m_List.Count);
-            for (int i = 0; i < m_List.Count; i++) newList.Add(m_List[i]);
-            foreach (var newItem in items)
+            foreach (var item in m_List)
+                newList.Add(item);
+            foreach (var newItem in newItems)
                 newList.Add(newItem);
             return new ArrayListBackedVector<T>(newList);
         }
@@ -93,15 +94,17 @@ namespace PersistentVectors
         IVector<T> IVector<T>.Filter(Func<T, bool> pred)
         {
             var newList = new List<T>();
-            foreach (var item in m_List) if (pred(item)) newList.Add(item);
+            foreach (var item in m_List)
+                if (pred(item))
+                    newList.Add(item);
             return new ArrayListBackedVector<T>(newList);
         }
 
         IVector<U> IVector<T>.Map<U>(Func<T, U> mapper)
         {
             var newList = new List<U>(m_List.Count);
-            for (int i = 0; i < m_List.Count; i++)
-                newList.Add(mapper(m_List[i]));
+            foreach (var item in m_List)
+                newList.Add(mapper(item));
             return new ArrayListBackedVector<U>(newList);
         }
 
@@ -116,8 +119,9 @@ namespace PersistentVectors
 
         IVector<Tuple<T, U>> IVector<T>.Zip<U>(IVector<U> that)
         {
-            var newList = new List<Tuple<T, U>>(Math.Min(m_List.Count, that.Length));
-            for (int i = 0; i < Math.Min(m_List.Count, that.Length); i++)
+            int newLength = Math.Min(m_List.Count, that.Length);
+            var newList = new List<Tuple<T, U>>(newLength);
+            for (int i = 0; i < newLength; i++)
                 newList.Add(Tuple.Create(m_List[i], that[i]));
             return new ArrayListBackedVector<Tuple<T, U>>(newList);
         }
@@ -135,15 +139,15 @@ namespace PersistentVectors
         TAcc IVector<T>.Foldl<TAcc>(Func<TAcc, T, TAcc> accumulator, TAcc seed)
         {
             var currentAcc = seed;
-            for (int i = 0; i < m_List.Count; i++)
-                currentAcc = accumulator(currentAcc, m_List[i]);
+            foreach (var item in m_List)
+                currentAcc = accumulator(currentAcc, item);
             return currentAcc;
         }
 
         TAcc IVector<T>.Foldr<TAcc>(Func<TAcc, T, TAcc> accumulator, TAcc seed)
         {
             var currentAcc = seed;
-            for (int i = m_List.Count; i >= 0; i--)
+            for (int i = m_List.Count - 1; i >= 0; i--)
                 currentAcc = accumulator(currentAcc, m_List[i]);
             return currentAcc;
         }
