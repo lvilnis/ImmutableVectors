@@ -10,7 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersistentVectorTests", "ImmutableVectorTests\PersistentVectorTests.csproj", "{2962CF14-3E6E-456D-807F-C90E468DA50D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersistentVectorTests", "PersistentVectorTests\PersistentVectorTests.csproj", "{59526F38-1614-4F1F-A6DE-FEE243A9F628}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A6A3601C-072F-4D63-8937-94DC3EC71B40} = {A6A3601C-072F-4D63-8937-94DC3EC71B40}
 	EndProjectSection
@@ -28,10 +28,10 @@ Global
 		{A6A3601C-072F-4D63-8937-94DC3EC71B40}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A6A3601C-072F-4D63-8937-94DC3EC71B40}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A6A3601C-072F-4D63-8937-94DC3EC71B40}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2962CF14-3E6E-456D-807F-C90E468DA50D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2962CF14-3E6E-456D-807F-C90E468DA50D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2962CF14-3E6E-456D-807F-C90E468DA50D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2962CF14-3E6E-456D-807F-C90E468DA50D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{59526F38-1614-4F1F-A6DE-FEE243A9F628}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59526F38-1614-4F1F-A6DE-FEE243A9F628}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59526F38-1614-4F1F-A6DE-FEE243A9F628}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59526F38-1614-4F1F-A6DE-FEE243A9F628}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
