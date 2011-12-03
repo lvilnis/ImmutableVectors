@@ -38,6 +38,8 @@ namespace PersistentVectors
         T Reduce(Func<T, T, T> accumulator);
         IVector<Tuple<T, U>> Zip<U>(IVector<U> that);
 
+        IEnumerable<T> FastRightToLeftEnumeration { get; }
+
         // need to add Slice / Window
     }
 }

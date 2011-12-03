@@ -6,10 +6,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PersistentVectors;
 using System.Diagnostics;
 
-namespace ImmutableVectorTests
+namespace PersistentVectorTests
 {
     [TestClass]
-    public class ImmutableVectorTests
+    public class PersistentVectorTests
     {
         private void TestVectorImplementation(Func<IEnumerable<int>, IVector<int>> getVector, string name)
         {
@@ -20,17 +20,17 @@ namespace ImmutableVectorTests
             {
                 for (int it = 0; it < 1000; it++)
                 {
-                    var vec1 = getVector(new[] { 1, 2, 3, 4, 5 });
+                    var vecInner = getVector(new[] { 1, 2, 3, 4, 5 });
 
-                    Assert.AreEqual(vec1.Tail, getVector(new[] { 2, 3, 4, 5 }));
-                    Assert.AreEqual(vec1.Popped, getVector(new[] { 1, 2, 3, 4 }));
-                    Assert.AreEqual(vec1.Append(7), getVector(new[] { 1, 2, 3, 4, 5, 7 }));
-                    Assert.AreEqual(vec1.Cons(5), getVector(new[] { 5, 1, 2, 3, 4, 5 }));
-                    Assert.AreEqual(vec1.Update(2, 6), getVector(new[] { 1, 2, 6, 4, 5 }));
+                    Assert.AreEqual(vecInner.Tail, getVector(new[] { 2, 3, 4, 5 }));
+                    Assert.AreEqual(vecInner.Popped, getVector(new[] { 1, 2, 3, 4 }));
+                    Assert.AreEqual(vecInner.Append(7), getVector(new[] { 1, 2, 3, 4, 5, 7 }));
+                    Assert.AreEqual(vecInner.Cons(5), getVector(new[] { 5, 1, 2, 3, 4, 5 }));
+                    Assert.AreEqual(vecInner.Update(2, 6), getVector(new[] { 1, 2, 6, 4, 5 }));
 
-                    Assert.AreEqual(vec1[3], 4);
-                    Assert.AreNotEqual(vec1[2], 5);
-                    Assert.AreEqual(vec1.Concat(vec1), getVector(new[] { 1, 2, 3, 4, 5, 1, 2, 3, 4, 5 }));
+                    Assert.AreEqual(vecInner[3], 4);
+                    Assert.AreNotEqual(vecInner[2], 5);
+                    Assert.AreEqual(vecInner.Concat(vecInner), getVector(new[] { 1, 2, 3, 4, 5, 1, 2, 3, 4, 5 }));
                     Assert.AreEqual(getVector(Enumerable.Range(1, 1000))[500], 501);
                     Assert.AreEqual(
                         getVector(Enumerable.Range(1, 1000)).Map(i => i * 3),
@@ -64,7 +64,7 @@ namespace ImmutableVectorTests
 
             TimeWithMessage(ms => string.Format("{0}: Iterating: {1} ms", name, ms), () =>
             {
-                for (int it = 0; it < 10; it++)
+                for (int it = 0; it < 50; it++)
                 {
                     int count = 0;
                     foreach (var number in vec)
@@ -81,6 +81,17 @@ namespace ImmutableVectorTests
                         count += vec[i];
                 }
             });
+
+            var vec1 = getVector(Enumerable.Range(1, 1000));
+            var vec2 = getVector(Enumerable.Range(1000, 1000));
+            TimeWithMessage(ms => string.Format("{0}: Zip and Map: {1} ms", name, ms), () =>
+            {
+                for (int it = 0; it < 500; it++)
+                {
+                    Assert.AreEqual(vec1.Zip(vec2), vec1.Map(i => Tuple.Create(i, i + 999)));
+                }
+            });
+
 
         }
 

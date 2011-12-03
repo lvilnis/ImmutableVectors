@@ -160,6 +160,15 @@ namespace PersistentVectors
             return currentAcc;
         }
 
+        IEnumerable<T> IVector<T>.FastRightToLeftEnumeration
+        {
+            get
+            {
+                for (int i = m_List.Count - 1; i >= 0; i--)
+                    yield return m_List[i];
+            }
+        }
+
         public bool Equals(IVector<T> other)
         {
             return other == null ? false : other.SequenceEqual(this);

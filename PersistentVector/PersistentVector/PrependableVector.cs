@@ -249,56 +249,327 @@ namespace PersistentVectors
 
         #region Collection functions
 
+        public IEnumerable<T> GetRightToLeftEnumeration()
+        {
+            // Specialize Enumeration to different tree heights gives a ~3x improvement over just indexing
+            int depth = (int)Math.Ceiling(Math.Log(m_Length, 32));
+
+            if (depth == 2)
+            {
+                for (int i1 = 0; i1 < m_Root.Length; i1++)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = 0; i2 < arr1.Length; i2++)
+                    {
+                        yield return (T)arr1[i2];
+                    }
+                }
+            }
+            else if (depth == 3)
+            {
+                for (int i1 = 0; i1 < m_Root.Length; i1++)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = 0; i2 < arr1.Length; i2++)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = 0; i3 < arr2.Length; i3++)
+                        {
+                            yield return (T)arr2[i3];
+                        }
+                    }
+                }
+            }
+            else if (depth == 4)
+            {
+                for (int i1 = 0; i1 < m_Root.Length; i1++)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = 0; i2 < arr1.Length; i2++)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = 0; i3 < arr2.Length; i3++)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = 0; i4 < arr3.Length; i4++)
+                            {
+                                yield return (T)arr3[i4];
+                            }
+                        }
+                    }
+                }
+            }
+            else if (depth == 5)
+            {
+                for (int i1 = 0; i1 < m_Root.Length; i1++)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = 0; i2 < arr1.Length; i2++)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = 0; i3 < arr2.Length; i3++)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = 0; i4 < arr3.Length; i4++)
+                            {
+                                var arr4 = (object[])arr3[i4];
+                                for (int i5 = 0; i5 < arr4.Length; i5++)
+                                {
+                                    yield return (T)arr4[i5];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (depth == 6)
+            {
+                for (int i1 = 0; i1 < m_Root.Length; i1++)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = 0; i2 < arr1.Length; i2++)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = 0; i3 < arr2.Length; i3++)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = 0; i4 < arr3.Length; i4++)
+                            {
+                                var arr4 = (object[])arr3[i4];
+                                for (int i5 = 0; i5 < arr4.Length; i5++)
+                                {
+                                    var arr5 = (object[])arr4[i5];
+                                    for (int i6 = 0; i6 < arr5.Length; i6++)
+                                    {
+                                        yield return (T)arr5[i6];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (depth == 7)
+            {
+                for (int i1 = 0; i1 < m_Root.Length; i1++)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = 0; i2 < arr1.Length; i2++)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = 0; i3 < arr2.Length; i3++)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = 0; i4 < arr3.Length; i4++)
+                            {
+                                var arr4 = (object[])arr3[i4];
+                                for (int i5 = 0; i5 < arr4.Length; i5++)
+                                {
+                                    var arr5 = (object[])arr4[i5];
+                                    for (int i6 = 0; i6 < arr5.Length; i6++)
+                                    {
+                                        var arr6 = (object[])arr5[i6];
+                                        for (int i7 = 0; i7 < arr6.Length; i7++)
+                                        {
+                                            yield return (T)arr6[i7];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < m_Tail.Length; i++)
+                yield return (T)m_Tail[i];
+        }
+
+        public IEnumerable<T> GetLeftToRightEnumeration()
+        {
+            // Specialize Enumeration to different tree heights gives a ~3x improvement over just indexing
+            // jeepers the backwards enumerator takes 134 lines of code!!
+            int depth = (int)Math.Ceiling(Math.Log(m_Length, 32));
+
+            for (int i = m_Tail.Length - 1; i >= 0; i--)
+                yield return (T)m_Tail[i];
+
+            if (depth == 2)
+            {
+                for (int i1 = m_Root.Length - 1; i1 >= 0; i1--)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
+                    {
+                        yield return (T)arr1[i2];
+                    }
+                }
+            }
+            else if (depth == 3)
+            {
+                for (int i1 = m_Root.Length - 1; i1 >= 0; i1--)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = arr2.Length - 1; i3 >= 0; i3--)
+                        {
+                            yield return (T)arr2[i3];
+                        }
+                    }
+                }
+            }
+            else if (depth == 4)
+            {
+                for (int i1 = m_Root.Length - 1; i1 >= 0; i1--)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = arr2.Length - 1; i3 >= 0; i3--)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = arr3.Length - 1; i4 >= 0; i4--)
+                            {
+                                yield return (T)arr3[i4];
+                            }
+                        }
+                    }
+                }
+            }
+            else if (depth == 5)
+            {
+                for (int i1 = m_Root.Length - 1; i1 >= 0; i1--)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = arr2.Length - 1; i3 >= 0; i3--)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = arr3.Length - 1; i4 >= 0; i4--)
+                            {
+                                var arr4 = (object[])arr3[i4];
+                                for (int i5 = arr4.Length - 1; i5 >= 0; i5--)
+                                {
+                                    yield return (T)arr4[i5];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (depth == 6)
+            {
+                for (int i1 = m_Root.Length - 1; i1 >= 0; i1--)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = arr2.Length - 1; i3 >= 0; i3--)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = arr3.Length - 1; i4 >= 0; i4--)
+                            {
+                                var arr4 = (object[])arr3[i4];
+                                for (int i5 = arr4.Length - 1; i5 >= 0; i5--)
+                                {
+                                    var arr5 = (object[])arr4[i5];
+                                    for (int i6 = arr5.Length - 1; i6 >= 0; i6--)
+                                    {
+                                        yield return (T)arr5[i6];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (depth == 7)
+            {
+                for (int i1 = m_Root.Length - 1; i1 >= 0; i1--)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = arr2.Length - 1; i3 >= 0; i3--)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = arr3.Length - 1; i4 >= 0; i4--)
+                            {
+                                var arr4 = (object[])arr3[i4];
+                                for (int i5 = arr4.Length - 1; i5 >= 0; i5--)
+                                {
+                                    var arr5 = (object[])arr4[i5];
+                                    for (int i6 = arr5.Length - 1; i6 >= 0; i6--)
+                                    {
+                                        var arr6 = (object[])arr5[i6];
+                                        for (int i7 = arr6.Length - 1; i7 >= 0; i7--)
+                                        {
+                                            yield return (T)arr6[i7];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         public PrependableImmutableVector<T> Concat(IEnumerable<T> other)
         {
             var newVector = new PrependableImmutableVector<T>();
             foreach (var item in other.Reverse())
                 newVector = newVector.Prepend(item);
-            for (int i = m_Length - 1; i >= 0; i--)
-                newVector = newVector.Prepend(this[i]);
+            foreach (var item in GetRightToLeftEnumeration())
+                newVector = newVector.Prepend(item);
             return newVector;
         }
 
         public PrependableImmutableVector<T> Filter(Func<T, bool> pred)
         {
-            // won't this lead to nlogn iteration?
-            // can't we just grab everything and iterate over it in O(n)?
-            // also, appending shit to a new vector seems dumb... 
+            // prepending to a new vector seems dumb... 
             var matching = new PrependableImmutableVector<T>();
-            for (int i = m_Length - 1; i >= 0; i--)
-            {
-                var el = this[i];
-                if (pred(el))
-                    matching = matching.Prepend(el);
-            }
+            foreach (var item in GetRightToLeftEnumeration())
+                if (pred(item))
+                    matching = matching.Prepend(item);
             return matching;
         }
 
         public PrependableImmutableVector<A> FlatMap<A>(Func<T, IEnumerable<A>> mapper)
         {
             var mapped = new PrependableImmutableVector<A>();
-            for (int i = m_Length - 1; i >= 0; i--)
-            {
-                var el = this[i];
-                foreach (var newElement in mapper(el).Reverse())
+            foreach (var item in GetRightToLeftEnumeration())
+                foreach (var newElement in mapper(item).Reverse())
                     mapped = mapped.Prepend(newElement);
-            }
             return mapped;
         }
 
         public PrependableImmutableVector<A> Map<A>(Func<T, A> mapper)
         {
             var mapped = new PrependableImmutableVector<A>();
-            for (int i = m_Length - 1; i >= 0; i--)
-                mapped = mapped.Prepend(mapper(this[i]));
+            foreach (var item in GetRightToLeftEnumeration())
+                mapped = mapped.Prepend(mapper(item));
             return mapped;
         }
 
         public PrependableImmutableVector<Tuple<T, A>> Zip<A>(IVector<A> that)
         {
             var zipped = new PrependableImmutableVector<Tuple<T, A>>();
-            for (int i = Math.Min(this.m_Length, that.Length) - 1; i >= 0; i--)
-                zipped = zipped.Prepend(Tuple.Create(this[i], that[i]));
+
+            // This enumerator crap should be faster than the indexing version
+            var thisEnumerator = this.GetRightToLeftEnumeration().GetEnumerator();
+            var thatEnumerator = that.FastRightToLeftEnumeration.GetEnumerator();
+
+            while (thisEnumerator.MoveNext() && thatEnumerator.MoveNext())
+                zipped = zipped.Prepend(Tuple.Create(thisEnumerator.Current, thatEnumerator.Current));
+
             return zipped;
         }
 
@@ -318,8 +589,7 @@ namespace PersistentVectors
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
-            for (int i = 0; i < m_Length; i++)
-                yield return this[i];
+            return GetLeftToRightEnumeration().GetEnumerator();
         }
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
@@ -356,20 +626,22 @@ namespace PersistentVectors
         {
             get
             {
-                // this doesn't have to be this slow... check out the windowed VectorProjection version??
+                // is there like a windowed / projection way to get fast slice?
                 var newVec = new PrependableImmutableVector<T>();
-                for (int i = m_Length - 2; i >= 0; i--)
-                    newVec = newVec.Prepend(this[i]);
+                var enumerator = GetRightToLeftEnumeration().GetEnumerator();
+                enumerator.MoveNext();
+                while (enumerator.MoveNext())
+                    newVec = newVec.Prepend(enumerator.Current);
                 return newVec;
             }
         }
 
-        IVector<T> IVector<T>.Append(T item)
+        IVector<T> IVector<T>.Append(T newItem)
         {
             var newVec = new PrependableImmutableVector<T>();
-            newVec = newVec.Prepend(item);
-            for (int i = m_Length - 1; i >= 0; i--)
-                newVec = newVec.Prepend(this[i]);
+            newVec = newVec.Prepend(newItem);
+            foreach (var item in GetRightToLeftEnumeration())
+                newVec = newVec.Prepend(item);
             return newVec;
         }
 
@@ -409,17 +681,24 @@ namespace PersistentVectors
         TAcc IVector<T>.Foldr<TAcc>(Func<TAcc, T, TAcc> accumulator, TAcc seed)
         {
             var currentValue = seed;
-            for (int i = m_Length - 1; i >= 0; i--)
-                currentValue = accumulator(currentValue, this[i]);
+            foreach (var item in GetRightToLeftEnumeration())
+                currentValue = accumulator(currentValue, item);
             return currentValue;
         }
 
         T IVector<T>.Reduce(Func<T, T, T> accumulator)
         {
-            var seed = this[0];
-            for (int i = 1; i < m_Length; i++)
-                seed = accumulator(seed, this[i]);
+            var enumerator = ((IEnumerable<T>)this).GetEnumerator();
+            enumerator.MoveNext();
+            var seed = enumerator.Current;
+            while (enumerator.MoveNext())
+                seed = accumulator(seed, enumerator.Current);
             return seed;
+        }
+
+        IEnumerable<T> IVector<T>.FastRightToLeftEnumeration
+        {
+            get { return GetRightToLeftEnumeration(); }
         }
 
         #endregion
