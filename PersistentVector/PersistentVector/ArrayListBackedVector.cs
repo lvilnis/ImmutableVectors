@@ -5,7 +5,7 @@ using System.Text;
 
 namespace PersistentVector
 {
-    internal class ArrayListBackedVector<T> : IVector<T>
+    public class ArrayListBackedVector<T> : IVector<T>
     {
         private readonly IList<T> m_List;
         public ArrayListBackedVector(IList<T> list)
@@ -179,6 +179,11 @@ namespace PersistentVector
             if (other == null) return false;
             if (other is IVector<T>) return Equals((IVector<T>)other);
             else return false;
+        }
+
+        T[] IVector<T>.FastToArray()
+        {
+            return m_List.ToArray();
         }
     }
 }

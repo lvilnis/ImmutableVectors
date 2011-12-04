@@ -6,7 +6,7 @@ using System.Text;
 namespace PersistentVector
 {
     // Port of Clojure's PersistentVector (by Rich Hickey) by way of Daniel Spiewak's Scala version
-    internal class PrependableImmutableVector<T> : IVector<T>
+    public class PrependableImmutableVector<T> : IVector<T>
     {
         private readonly int m_TailOffset;
         private readonly int m_Shift;
@@ -701,6 +701,29 @@ namespace PersistentVector
             get { return GetRightToLeftEnumeration(); }
         }
 
+        T[] IVector<T>.FastToArray()
+        {
+            // TODO manual inlining for all 7 depths?? Or can we iterate through these things faster in some other way?
+
+            var outArray = new T[m_Length];
+            int outputIndex = 0;
+
+            for (int i = 0; i < m_TailOffset; i += 32)
+            {
+                var arr = m_Root;
+                for (int level = m_Shift; level > 0; level -= 5)
+                    arr = (object[])arr[(i >> level) & 0x01f];
+
+                Array.Copy(arr, 0, outArray, outputIndex, 32);
+
+                outputIndex += 32;
+            }
+
+            Array.Copy(m_Tail, 0, outArray, outputIndex, m_Tail.Length);
+
+            return outArray;
+        }
+
         #endregion
 
         public bool Equals(IVector<T> other)
@@ -714,5 +737,198 @@ namespace PersistentVector
             if (other is IVector<T>) return Equals((IVector<T>)other);
             else return false;
         }
+        
+        #region Embarassingly huge inlined constructors
+
+        public PrependableImmutableVector(T[] items)
+        {
+            // This is still a lot slower than it should be - gotta profile it and find out why...
+            // FIXME this code is insanely ugly, please rewrite it to not be so damn awful
+
+            Array.Reverse(items); // HACK FIXME this shouldn't mutate its input, but this is just such an easy hack...
+
+            int depth = items.Length == 0 ? 1 : (int)Math.Ceiling(Math.Log(items.Length, 32));
+            int tailLength = items.Length % 32;
+            if (tailLength == 0) tailLength = 32;
+
+            int numLeafArrays = (int)Math.Ceiling(items.Length / 32f) - 1;
+            int numLevel1Parents = (int)Math.Ceiling(numLeafArrays / 32f);
+            int numLevel2Parents = (int)Math.Ceiling(numLevel1Parents / 32f);
+            int numLevel3Parents = (int)Math.Ceiling(numLevel2Parents / 32f);
+            int numLevel4Parents = (int)Math.Ceiling(numLevel3Parents / 32f);
+            int numLevel5Parents = (int)Math.Ceiling(numLevel4Parents / 32f);
+
+            int inputIndex = 0;
+
+            if (depth < 2)
+            {
+                m_Root = new object[0];
+            }
+            else if (depth == 2)
+            {
+                var level1Parent = new object[numLeafArrays];
+                for (int i1 = 0; i1 < numLeafArrays; i1++)
+                {
+                    var leafArray = new object[32];
+                    Array.Copy(items, inputIndex, leafArray, 0, 32);
+                    level1Parent[i1] = leafArray;
+                    inputIndex += 32;
+                }
+                m_Root = level1Parent;
+            }
+            else if (depth == 3)
+            {
+                var level2Parent = new object[numLevel1Parents];
+                for (int i2 = 0; i2 < numLevel1Parents; i2++)
+                {
+                    var level1Parent = new object[i2 == numLevel1Parents - 1 ? numLeafArrays % 32 : 32];
+                    for (int i1 = 0; i1 < level1Parent.Length; i1++)
+                    {
+                        var leafArray = new object[32];
+                        Array.Copy(items, inputIndex, leafArray, 0, 32);
+                        level1Parent[i1] = leafArray;
+                        inputIndex += 32;
+                    }
+                    level2Parent[i2] = level1Parent;
+                }
+                m_Root = level2Parent;
+            }
+            else if (depth == 4)
+            {
+                var level3Parent = new object[numLevel2Parents];
+
+                for (int i3 = 0; i3 < numLevel2Parents; i3++)
+                {
+                    var level2Parent = new object[i3 == numLevel2Parents - 1 ? (numLevel1Parents - 1) % 32 + 1 : 32];
+                    for (int i2 = 0; i2 < level2Parent.Length; i2++)
+                    {
+                        var level1Parent = new object[i3 == numLevel2Parents - 1 && i2 == level2Parent.Length - 1 ? (numLeafArrays - 1) % 32 + 1 : 32];
+                        if (level1Parent.Length == 0) level1Parent = new object[32];
+                        for (int i1 = 0; i1 < level1Parent.Length; i1++)
+                        {
+                            var leafArray = new object[32];
+                            Array.Copy(items, inputIndex, leafArray, 0, 32);
+                            level1Parent[i1] = leafArray;
+                            inputIndex += 32;
+                        }
+                        level2Parent[i2] = level1Parent;
+                    }
+                    level3Parent[i3] = level2Parent;
+                }
+
+                m_Root = level3Parent;
+            }
+            else if (depth == 5)
+            {
+                var level4Parent = new object[numLevel3Parents];
+
+                for (int i4 = 0; i4 < numLevel3Parents; i4++)
+                {
+                    var level3Parent = new object[i4 == numLevel3Parents - 1 ? (numLevel2Parents - 1) % 32 + 1 : 32];
+                    for (int i3 = 0; i3 < level3Parent.Length; i3++)
+                    {
+                        var level2Parent = new object[i4 == numLevel3Parents - 1 && i3 == level3Parent.Length - 1 ? (numLevel1Parents - 1) % 32 + 1 : 32];
+                        for (int i2 = 0; i2 < level2Parent.Length; i2++)
+                        {
+                            var level1Parent = new object[i4 == numLevel3Parents - 1 && i3 == level3Parent.Length - 1 && i2 == level2Parent.Length - 1 ? (numLeafArrays - 1) % 32 + 1 : 32];
+                            for (int i1 = 0; i1 < level1Parent.Length; i1++)
+                            {
+                                var leafArray = new object[32];
+                                Array.Copy(items, inputIndex, leafArray, 0, 32);
+                                level1Parent[i1] = leafArray;
+                                inputIndex += 32;
+                            }
+                            level2Parent[i2] = level1Parent;
+                        }
+                        level3Parent[i3] = level2Parent;
+                    }
+                    level4Parent[i4] = level3Parent;
+                }
+
+                m_Root = level4Parent;
+            }
+            else if (depth == 6)
+            {
+                var level5Parent = new object[numLevel4Parents];
+
+                for (int i5 = 0; i5 < numLevel4Parents; i5++)
+                {
+                    var level4Parent = new object[i5 == numLevel4Parents - 1 ? (numLevel3Parents - 1) % 32 + 1 : 32];
+                    for (int i4 = 0; i4 < level4Parent.Length; i4++)
+                    {
+                        var level3Parent = new object[i5 == numLevel4Parents - 1 && i4 == level4Parent.Length - 1 ? (numLevel2Parents - 1) % 32 + 1 : 32];
+                        for (int i3 = 0; i3 < level3Parent.Length; i3++)
+                        {
+                            var level2Parent = new object[i5 == numLevel4Parents - 1 && i4 == level4Parent.Length - 1 && i3 == level3Parent.Length - 1 ? (numLevel1Parents - 1) % 32 + 1 : 32];
+                            for (int i2 = 0; i2 < level2Parent.Length; i2++)
+                            {
+                                var level1Parent = new object[i5 == numLevel4Parents - 1 && i4 == level4Parent.Length - 1 && i3 == level3Parent.Length - 1 && i2 == level2Parent.Length - 1 ? (numLeafArrays - 1) % 32 + 1 : 32];
+                                for (int i1 = 0; i1 < level1Parent.Length; i1++)
+                                {
+                                    var leafArray = new object[32];
+                                    Array.Copy(items, inputIndex, leafArray, 0, 32);
+                                    level1Parent[i1] = leafArray;
+                                    inputIndex += 32;
+                                }
+                                level2Parent[i2] = level1Parent;
+                            }
+                            level3Parent[i3] = level2Parent;
+                        }
+                        level4Parent[i4] = level3Parent;
+                    }
+                    level5Parent[i5] = level4Parent;
+                }
+
+                m_Root = level5Parent;
+            }
+            else if (depth == 7)
+            {
+                var level6Parent = new object[numLevel5Parents];
+
+                for (int i6 = 0; i6 < numLevel5Parents; i6++)
+                {
+                    var level5Parent = new object[i6 == numLevel5Parents - 1 ? (numLevel4Parents - 1) % 32 + 1 : 32];
+                    for (int i5 = 0; i5 < level5Parent.Length; i5++)
+                    {
+                        var level4Parent = new object[i6 == numLevel5Parents - 1 && i5 == level5Parent.Length - 1 ? (numLevel3Parents - 1) % 32 + 1 : 32];
+                        for (int i4 = 0; i4 < level4Parent.Length; i4++)
+                        {
+                            var level3Parent = new object[i6 == numLevel5Parents - 1 && i5 == level5Parent.Length - 1 && i4 == level4Parent.Length - 1 ? (numLevel2Parents - 1) % 32 + 1 : 32];
+                            for (int i3 = 0; i3 < level3Parent.Length; i3++)
+                            {
+                                var level2Parent = new object[i6 == numLevel5Parents - 1 && i5 == level5Parent.Length - 1 && i4 == level4Parent.Length - 1 && i3 == level3Parent.Length - 1 ? (numLevel1Parents - 1) % 32 + 1 : 32];
+                                for (int i2 = 0; i2 < level2Parent.Length; i2++)
+                                {
+                                    var level1Parent = new object[i6 == numLevel5Parents - 1 && i5 == level5Parent.Length - 1 && i4 == level4Parent.Length - 1 && i3 == level3Parent.Length - 1 && i2 == level2Parent.Length - 1 ? (numLeafArrays - 1) % 32 + 1 : 32];
+                                    for (int i1 = 0; i1 < level1Parent.Length; i1++)
+                                    {
+                                        var leafArray = new object[32];
+                                        Array.Copy(items, inputIndex, leafArray, 0, 32);
+                                        level1Parent[i1] = leafArray;
+                                        inputIndex += 32;
+                                    }
+                                    level2Parent[i2] = level1Parent;
+                                }
+                                level3Parent[i3] = level2Parent;
+                            }
+                            level4Parent[i4] = level3Parent;
+                        }
+                        level5Parent[i5] = level4Parent;
+                    }
+                    level6Parent[i6] = level5Parent;
+                }
+
+                m_Root = level6Parent;
+            }
+
+            m_Tail = new object[tailLength];
+            Array.Copy(items, inputIndex, m_Tail, 0, tailLength);
+
+            m_Length = items.Length;
+            m_Shift = Math.Max(5, (depth - 1) * 5);
+            m_TailOffset = m_Length - m_Tail.Length;
+        }
+
+        #endregion
     }
 }

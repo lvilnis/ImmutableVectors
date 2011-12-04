@@ -91,8 +91,6 @@ namespace PersistentVectorTests
                     Assert.AreEqual(vec1.Zip(vec2), vec1.Map(i => Tuple.Create(i, i + 999)));
                 }
             });
-
-
         }
 
         private void TimeWithMessage(Func<double, string> message, Action toTime)
@@ -118,6 +116,93 @@ namespace PersistentVectorTests
         public void TestArrayBacked()
         {
             TestVectorImplementation(Vector.ArrayListBacked, "ArrayListBacked");
+        }
+
+        [TestMethod]
+        public void TestFastConstructors()
+        {
+            //IVector<int> vec1 = new AppendableImmutableVector<int>(Enumerable.Range(0, 1000000).ToArray());
+            //IVector<int> vec2 = new AppendableImmutableVector<int>().Concat(Enumerable.Range(0, 1000000));
+            //Assert.AreEqual(vec1, vec2);
+
+            var arr = Enumerable.Range(1, 1000000).ToArray();
+            TimeWithMessage(ms => string.Format("Fast Constructor: {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var vec = new AppendableImmutableVector<int>(arr);
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("Slow Constructor: {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var vec = new AppendableImmutableVector<int>().Concat(arr);
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("ArrayList (for comparison): {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var list = new List<int>();
+                    foreach (var item in arr)
+                        list.Add(item);
+                }
+            });
+
+            // test depth of 1
+            IVector<int> vec1 = new AppendableImmutableVector<int>(Enumerable.Range(0, 12).ToArray());
+            Assert.AreEqual(vec1.ToArray().Length, 12);
+
+            // test depth of 2
+            IVector<int> vec2 = new AppendableImmutableVector<int>(Enumerable.Range(0, 120).ToArray());
+            Assert.AreEqual(vec2.ToArray().Length, 120);
+
+            // test depth of 3
+            IVector<int> vec3 = new AppendableImmutableVector<int>(Enumerable.Range(0, 1200).ToArray());
+            Assert.AreEqual(vec3.ToArray().Length, 1200);
+
+            // test depth of 4
+            IVector<int> vec4 = new AppendableImmutableVector<int>(Enumerable.Range(0, 40000).ToArray());
+            Assert.AreEqual(vec4.ToArray().Length, 40000);
+
+            // test depth of 5
+            IVector<int> vec5 = new AppendableImmutableVector<int>(Enumerable.Range(0, 1200000).ToArray());
+            Assert.AreEqual(vec5.ToArray().Length, 1200000);
+
+            //// test depth of 6
+            //IVector<int> vec6 = new AppendableImmutableVector<int>(Enumerable.Range(0, 40000000).ToArray());
+            //Assert.AreEqual(vec6.ToArray().Length, 40000000);
+
+            //// test depth of 7 - this will probably crash a computer since this requires several gigabytes of memory sooooo
+            //IVector<int> vec7 = new AppendableImmutableVector<int>(Enumerable.Range(0, 1100000000).ToArray());
+            //Assert.AreEqual(vec7.Length, 1100000000);
+        }
+
+        [TestMethod]
+        public void TestFastToArray()
+        {
+            IVector<int> vec = new AppendableImmutableVector<int>(Enumerable.Range(0, 1000000).ToArray());
+
+            TimeWithMessage(ms => string.Format("Fast ToArray: {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var resultArray = vec.FastToArray();
+                    Assert.AreEqual(resultArray.Length, vec.Length);
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("Slow ToArray: {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var resultArray = vec.ToArray();
+                    Assert.AreEqual(resultArray.Length, vec.Length);
+                }
+            });
         }
     }
 }

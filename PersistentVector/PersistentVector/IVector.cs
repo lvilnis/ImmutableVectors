@@ -40,6 +40,8 @@ namespace PersistentVector
 
         IEnumerable<T> FastRightToLeftEnumeration { get; }
 
+        T[] FastToArray();
+
         // need to add Slice / Window
     }
 }
