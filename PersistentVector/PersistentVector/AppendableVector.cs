@@ -610,22 +610,25 @@ namespace PersistentVector
         {
             get
             {
-                // is there like a windowed / projection way to get fast slice?
-                var newVec = new AppendableImmutableVector<T>();
-                var enumerator = GetLeftToRightEnumeration().GetEnumerator();
+                var newArr = new T[m_Length - 1];
+                var enumerator = this.GetLeftToRightEnumeration().GetEnumerator();
                 enumerator.MoveNext();
+                int i = 0;
                 while (enumerator.MoveNext())
-                    newVec = newVec.Append(enumerator.Current);
-                return newVec;
+                    newArr[i++] = enumerator.Current;
+                return new PrependableImmutableVector<T>(newArr);
             }
         }
 
         IVector<T> IVector<T>.Cons(T newItem)
         {
-            var newVector = new AppendableImmutableVector<T>().Append(newItem);
-            foreach (var item in this)
-                newVector = newVector.Append(item);
-            return newVector;
+            // is there like a windowed / projection way to get fast slice?
+            var newArr = new T[m_Length + 1];
+            newArr[0] = newItem;
+            int i = 1;
+            foreach(var item in this)
+                newArr[i++] = item;
+            return new PrependableImmutableVector<T>(newArr);
         }
 
         IVector<T> IVector<T>.Update(int index, T newVal)
@@ -750,7 +753,7 @@ namespace PersistentVector
 
             int depth = items.Length == 0 ? 1 : (int)Math.Ceiling(Math.Log(items.Length, 32));
             int tailLength = items.Length % 32;
-            if (tailLength == 0) tailLength = 32;
+            if (tailLength == 0 && items.Length > 0) tailLength = 32;
 
             int numLeafArrays = (int)Math.Ceiling(items.Length / 32f) - 1;
             int numLevel1Parents = (int)Math.Ceiling(numLeafArrays / 32f);

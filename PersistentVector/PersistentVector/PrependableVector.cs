@@ -634,23 +634,30 @@ namespace PersistentVector
         {
             get
             {
-                // is there like a windowed / projection way to get fast slice?
-                var newVec = new PrependableImmutableVector<T>();
-                var enumerator = GetRightToLeftEnumeration().GetEnumerator();
-                enumerator.MoveNext();
-                while (enumerator.MoveNext())
-                    newVec = newVec.Prepend(enumerator.Current);
-                return newVec;
+                // PrependableVector returns an Appendable one when you append to it
+                // and vice versa. That way if we use a vector wrong we only do it once
+                // giving us really nice characteristics on the assumption that updates to an end are clustered 
+                // Note: also need to make a VectorProjection class so I can lazily map vectors...
+
+                // change all these operations to use array copies
+
+                var newArr = new T[m_Length - 1];
+                int i = 0;
+                foreach (var item in this)
+                    if (i < m_Length - 1)
+                        newArr[i++] = item;
+                return new AppendableImmutableVector<T>(newArr);
             }
         }
 
         IVector<T> IVector<T>.Append(T newItem)
         {
-            var newVec = new PrependableImmutableVector<T>();
-            newVec = newVec.Prepend(newItem);
-            foreach (var item in GetRightToLeftEnumeration())
-                newVec = newVec.Prepend(item);
-            return newVec;
+            var newArr = new T[m_Length + 1];
+            int i = 0;
+            foreach (var item in this)
+                newArr[i++] = item;
+            newArr[i] = newItem;
+            return new AppendableImmutableVector<T>(newArr);
         }
 
         IVector<T> IVector<T>.Concat(IEnumerable<T> items)
@@ -757,7 +764,7 @@ namespace PersistentVector
 
             int depth = items.Length == 0 ? 1 : (int)Math.Ceiling(Math.Log(items.Length, 32));
             int tailLength = items.Length % 32;
-            if (tailLength == 0) tailLength = 32;
+            if (tailLength == 0 && items.Length > 0) tailLength = 32;
 
             int numLeafArrays = (int)Math.Ceiling(items.Length / 32f) - 1;
             int numLevel1Parents = (int)Math.Ceiling(numLeafArrays / 32f);
