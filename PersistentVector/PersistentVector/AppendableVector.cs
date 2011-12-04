@@ -752,8 +752,7 @@ namespace PersistentVector
             // FIXME this code is insanely ugly, please rewrite it to not be so damn awful
 
             int depth = items.Length == 0 ? 1 : (int)Math.Ceiling(Math.Log(items.Length, 32));
-            int tailLength = items.Length % 32;
-            if (tailLength == 0 && items.Length > 0) tailLength = 32;
+            int tailLength = (items.Length - 1) % 32 + 1;
 
             int numLeafArrays = (int)Math.Ceiling(items.Length / 32f) - 1;
             int numLevel1Parents = (int)Math.Ceiling(numLeafArrays / 32f);
