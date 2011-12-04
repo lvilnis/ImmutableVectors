@@ -19,6 +19,7 @@ namespace PersistentVectorTests
             TestArrayBacked();
             TestFastConstructors();
             TestFastToArray();
+            SomeAlgorithms();
         }
 
         private void TestVectorImplementation(Func<IEnumerable<int>, IVector<int>> getVector, string name)
@@ -122,7 +123,6 @@ namespace PersistentVectorTests
             Console.WriteLine(message(stopwatch.ElapsedMilliseconds));
         }
 
-
         [TestMethod]
         public void TestHOFs()
         {
@@ -177,7 +177,7 @@ namespace PersistentVectorTests
         [TestMethod]
         public void TestArrayBacked()
         {
-                 TestVectorImplementation(Vector.ArrayListBacked, "ArrayListBacked");
+            TestVectorImplementation(Vector.ArrayListBacked, "ArrayListBacked");
         }
 
         [TestMethod]
@@ -213,6 +213,29 @@ namespace PersistentVectorTests
                         list.Add(item);
                 }
             });
+
+            TimeWithMessage(ms => string.Format("Array - for loop copy (for comparison): {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var newArr = new int[arr.Length];
+                    for (int j = 0; j < newArr.Length; j++)
+                        newArr[j] = arr[j];
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("Array - memcopy (for comparison): {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var newArr = new int[arr.Length];
+                    Array.Copy(arr, newArr, newArr.Length);
+                }
+            });
+
+            // OK wtf??? making a new vector is 3x faster than MEMCOPY???
+            // must be because the little bite-sized arrays are easier to deal with than
+            // one giant one... that's fucking crazy, this data structure is boss...
 
             // test depth of 1
             IVector<int> vec1 = new AppendableImmutableVector<int>(Enumerable.Range(0, 12).ToArray());
@@ -265,6 +288,49 @@ namespace PersistentVectorTests
                     Assert.AreEqual(resultArray.Length, vec.Length);
                 }
             });
+        }
+
+        [TestMethod]
+        public void SomeAlgorithms()
+        {
+            IVector<int> normalVec = new PrependableImmutableVector<int>(
+                Enumerable.Range(0, 1000).ToArray());
+
+            var rnd = new Random();
+            IVector<int> jumbledVec = new PrependableImmutableVector<int>(
+                Enumerable.Range(0, 1000000).OrderBy(_ => rnd.NextDouble()).ToArray());
+
+
+            TimeWithMessage(ms => string.Format("MapPrime: {0} ms", ms), () =>
+            {
+                for (int i = 0; i < 100; i++)
+                {
+                    var sorted = MapPrime(normalVec, el => el * 3);
+                }
+            });
+
+            Func<IVector<int>, IVector<int>> qsort = null;
+            qsort = xs =>
+            {
+                if (xs.Length == 0) return xs;
+                var pivot = xs.End;
+                var left = xs.Popped.Filter(el => el <= pivot);
+                var right = xs.Popped.Filter(el => el > pivot);
+                return qsort(left).Concat(qsort(right));
+            };
+
+            TimeWithMessage(ms => string.Format("Prependable qsort: {0} ms", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var sorted = qsort(jumbledVec);
+                }
+            });
+        }
+
+        private IVector<U> MapPrime<T, U>(IVector<T> vec, Func<T, U> mapper)
+        {
+            return vec.Length == 0 ? new PrependableImmutableVector<U>() : MapPrime(vec.Tail, mapper).Cons(mapper(vec.Head));
         }
     }
 }
