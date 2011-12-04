@@ -11,6 +11,16 @@ namespace PersistentVectorTests
     [TestClass]
     public class PersistentVectorTests
     {
+        public void RunTests()
+        {
+            TestAppendable();
+            TestPrependable();
+            TestHOFs();
+            TestArrayBacked();
+            TestFastConstructors();
+            TestFastToArray();
+        }
+
         private void TestVectorImplementation(Func<IEnumerable<int>, IVector<int>> getVector, string name)
         {
             var stopwatch = new Stopwatch();
@@ -102,16 +112,58 @@ namespace PersistentVectorTests
             Console.WriteLine(message(stopwatch.ElapsedMilliseconds));
         }
 
+
+        [TestMethod]
+        public void TestHOFs()
+        {
+            IVector<int> vec1 = new AppendableImmutableVector<int>(Enumerable.Range(0, 1000000).ToArray());
+            IVector<int> vec2 = new PrependableImmutableVector<int>(Enumerable.Range(0, 1000000).ToArray());
+
+            TimeWithMessage(ms => string.Format("Map (appendable): {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    vec1.Map(el => el * 3 - 45 + 3 * 26);
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("Map (prependable): {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    vec2.Map(el => el * 3 - 45 + 3 * 26);
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("Filter (appendable): {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    vec1.Filter(el => el % 2 == 0);
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("Filter (prependable): {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    vec2.Filter(el => el % 2 == 0);
+                }
+            });
+        }
+
         [TestMethod]
         public void TestAppendable()
         {
             TestVectorImplementation(Vector.Appendable, "Appendable");
         }
+
         [TestMethod]
         public void TestPrependable()
         {
             TestVectorImplementation(Vector.Prependable, "Prependable");
         }
+
         [TestMethod]
         public void TestArrayBacked()
         {

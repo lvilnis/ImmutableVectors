@@ -6,6 +6,11 @@ using System.Text;
 namespace PersistentVector
 {
     // Port of Clojure's PersistentVector (by Rich Hickey) by way of Daniel Spiewak's Scala version
+
+    // DISCLAIMER: this code is horribly factored, it shares tons of copy-paste with the appendable version. But, I
+    // haven't had time to make them share code reasonably yet...  Also, there's tons of super-ugly
+    // manually-inlined code that dispatches on tree depth. It's pretty fast though!
+
     public class PrependableImmutableVector<T> : IVector<T>
     {
         private readonly int m_TailOffset;
@@ -534,43 +539,46 @@ namespace PersistentVector
 
         public PrependableImmutableVector<T> Filter(Func<T, bool> pred)
         {
-            // prepending to a new vector seems dumb... 
-            var matching = new PrependableImmutableVector<T>();
-            foreach (var item in GetRightToLeftEnumeration())
+            // Using intermediate arrays/lists seems to give a 20-35% improvement over repeated appends in the average case (filtering out evens)
+            // Probably slower for filtering down small sets - which might be what we should be optimizing more
+            var matching = new List<T>(m_Length);
+            foreach (var item in this)
                 if (pred(item))
-                    matching = matching.Prepend(item);
-            return matching;
+                    matching.Add(item);
+            return new PrependableImmutableVector<T>(matching.ToArray());
         }
 
         public PrependableImmutableVector<A> FlatMap<A>(Func<T, IEnumerable<A>> mapper)
         {
-            var mapped = new PrependableImmutableVector<A>();
-            foreach (var item in GetRightToLeftEnumeration())
-                foreach (var newElement in mapper(item).Reverse())
-                    mapped = mapped.Prepend(newElement);
-            return mapped;
+            var mapped = new List<A>(m_Length);
+            foreach (var item in this)
+                foreach (var newElement in mapper(item))
+                    mapped.Add(newElement);
+            return new PrependableImmutableVector<A>(mapped.ToArray());
         }
 
         public PrependableImmutableVector<A> Map<A>(Func<T, A> mapper)
         {
-            var mapped = new PrependableImmutableVector<A>();
-            foreach (var item in GetRightToLeftEnumeration())
-                mapped = mapped.Prepend(mapper(item));
-            return mapped;
+            var mapped = new A[m_Length];
+            int i = 0;
+            foreach (var item in this)
+                mapped[i++] = mapper(item);
+            return new PrependableImmutableVector<A>(mapped);
         }
 
         public PrependableImmutableVector<Tuple<T, A>> Zip<A>(IVector<A> that)
         {
-            var zipped = new PrependableImmutableVector<Tuple<T, A>>();
+            var resultArray = new Tuple<T, A>[Math.Min(m_Length, that.Length)];
 
             // This enumerator crap should be faster than the indexing version
-            var thisEnumerator = this.GetRightToLeftEnumeration().GetEnumerator();
-            var thatEnumerator = that.FastRightToLeftEnumeration.GetEnumerator();
+            var thisEnumerator = this.GetLeftToRightEnumeration().GetEnumerator();
+            var thatEnumerator = that.GetEnumerator();
 
+            int i = 0;
             while (thisEnumerator.MoveNext() && thatEnumerator.MoveNext())
-                zipped = zipped.Prepend(Tuple.Create(thisEnumerator.Current, thatEnumerator.Current));
+                resultArray[i++] = Tuple.Create(thisEnumerator.Current, thatEnumerator.Current);
 
-            return zipped;
+            return new PrependableImmutableVector<Tuple<T, A>>(resultArray);
         }
 
         #endregion
@@ -737,7 +745,7 @@ namespace PersistentVector
             if (other is IVector<T>) return Equals((IVector<T>)other);
             else return false;
         }
-        
+
         #region Embarassingly huge inlined constructors
 
         public PrependableImmutableVector(T[] items)

@@ -6,6 +6,11 @@ using System.Text;
 namespace PersistentVector
 {
     // Port of Clojure's PersistentVector (by Rich Hickey) by way of Daniel Spiewak's Scala version
+
+    // DISCLAIMER: this code is horribly factored, it shares tons of copy-paste with the prependable version. But, I
+    // haven't had time to make them share code reasonably yet...  Also, there's tons of super-ugly
+    // manually-inlined code that dispatches on tree depth. It's pretty fast though!
+
     public class AppendableImmutableVector<T> : IVector<T>
     {
         private readonly int m_TailOffset;
@@ -520,6 +525,8 @@ namespace PersistentVector
 
         public AppendableImmutableVector<T> Concat(IEnumerable<T> other)
         {
+            // should make a dedicated Concat routine that avoids some of the
+            // repeated copy-on-writes since those intermediate results are never seen
             var currentVector = this;
             foreach (var item in other)
                 currentVector = currentVector.Append(item);
@@ -528,44 +535,46 @@ namespace PersistentVector
 
         public AppendableImmutableVector<T> Filter(Func<T, bool> pred)
         {
-            // appending to a new vector is dumb... 
-            // we need shortcuts to build from arrays, all this copy on write is deadly
-            var matching = new AppendableImmutableVector<T>();
+            // Using intermediate arrays/lists seems to give a 20-35% improvement over repeated appends in the average case (filtering out evens)
+            // Probably slower for filtering down small sets - which might be what we should be optimizing more
+            var matching = new List<T>(m_Length);
             foreach (var item in this)
                 if (pred(item))
-                    matching = matching.Append(item);
-            return matching;
+                    matching.Add(item);
+            return new AppendableImmutableVector<T>(matching.ToArray());
         }
 
         public AppendableImmutableVector<A> FlatMap<A>(Func<T, IEnumerable<A>> mapper)
         {
-            var mapped = new AppendableImmutableVector<A>();
+            var mapped = new List<A>(m_Length);
             foreach (var item in this)
                 foreach (var newElement in mapper(item))
-                    mapped = mapped.Append(newElement);
-            return mapped;
+                    mapped.Add(newElement);
+            return new AppendableImmutableVector<A>(mapped.ToArray());
         }
 
         public AppendableImmutableVector<A> Map<A>(Func<T, A> mapper)
         {
-            var mapped = new AppendableImmutableVector<A>();
+            var mapped = new A[m_Length];
+            int i = 0;
             foreach (var item in this)
-                mapped = mapped.Append(mapper(item));
-            return mapped;
+                mapped[i++] = mapper(item);
+            return new AppendableImmutableVector<A>(mapped);
         }
 
         public AppendableImmutableVector<Tuple<T, A>> Zip<A>(IVector<A> that)
         {
-            var zipped = new AppendableImmutableVector<Tuple<T, A>>();
+            var resultArray = new Tuple<T, A>[Math.Min(m_Length, that.Length)];
 
             // This enumerator crap should be faster than the indexing version
             var thisEnumerator = this.GetLeftToRightEnumeration().GetEnumerator();
             var thatEnumerator = that.GetEnumerator();
 
+            int i = 0;
             while (thisEnumerator.MoveNext() && thatEnumerator.MoveNext())
-                zipped = zipped.Append(Tuple.Create(thisEnumerator.Current, thatEnumerator.Current));
+                resultArray[i++] = Tuple.Create(thisEnumerator.Current, thatEnumerator.Current);
 
-            return zipped;
+            return new AppendableImmutableVector<Tuple<T, A>>(resultArray);
         }
 
         #endregion
