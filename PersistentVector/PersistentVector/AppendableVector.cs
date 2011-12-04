@@ -17,9 +17,9 @@ namespace PersistentVector
         private readonly int m_Shift;
         private readonly int m_Length;
         private readonly object[] m_Root;
-        private readonly object[] m_Tail;
+        private readonly T[] m_Tail;
 
-        private AppendableImmutableVector(int length, int shift, object[] root, object[] tail)
+        private AppendableImmutableVector(int length, int shift, object[] root, T[] tail)
         {
             m_TailOffset = length - tail.Length;
             m_Length = length;
@@ -28,7 +28,7 @@ namespace PersistentVector
             m_Tail = tail;
         }
 
-        public AppendableImmutableVector() : this(0, 5, new object[0], new object[0]) { }
+        public AppendableImmutableVector() : this(0, 5, new object[0], new T[0]) { }
 
         public T this[int i]
         {
@@ -40,10 +40,12 @@ namespace PersistentVector
                         return (T)m_Tail[i & 0x01f];
 
                     var arr = m_Root;
-                    for (int level = m_Shift; level > 0; level -= 5)
+                    for (int level = m_Shift; level > 5; level -= 5)
                         arr = (object[])arr[(i >> level) & 0x01f];
 
-                    return (T)arr[i & 0x01f];
+                    var leafArr = (T[])arr[(i >> 5) & 0x01f];
+
+                    return leafArr[i & 0x01f];
                 }
 
                 throw new Exception("Index out of bounds!");
@@ -56,7 +58,7 @@ namespace PersistentVector
             {
                 if (i >= m_TailOffset)
                 {
-                    var newTail = new object[m_Tail.Length];
+                    var newTail = new T[m_Tail.Length];
                     Array.Copy(m_Tail, 0, newTail, 0, m_Tail.Length);
                     newTail[i & 0x01f] = obj;
 
@@ -73,7 +75,7 @@ namespace PersistentVector
         {
             if (m_Tail.Length < 32)
             {
-                var newTail = new object[m_Tail.Length + 1];
+                var newTail = new T[m_Tail.Length + 1];
                 Array.Copy(m_Tail, 0, newTail, 0, m_Tail.Length);
                 newTail[m_Tail.Length] = obj;
 
@@ -91,7 +93,7 @@ namespace PersistentVector
                 newShift += 5;
             }
 
-            return new AppendableImmutableVector<T>(m_Length + 1, newShift, newRoot, NewArray(obj));
+            return new AppendableImmutableVector<T>(m_Length + 1, newShift, newRoot, new T[] { obj });
         }
 
         public AppendableImmutableVector<T> Pop()
@@ -106,7 +108,7 @@ namespace PersistentVector
             }
             else if (m_Tail.Length > 1)
             {
-                var newTail = new object[m_Tail.Length - 1];
+                var newTail = new T[m_Tail.Length - 1];
                 Array.Copy(m_Tail, 0, newTail, 0, newTail.Length);
 
                 return new AppendableImmutableVector<T>(m_Length - 1, m_Shift, m_Root, newTail);
@@ -127,7 +129,7 @@ namespace PersistentVector
                     newShift -= 5;
                 }
 
-                return new AppendableImmutableVector<T>(m_Length - 1, newShift, newRoot, (object[])pTail);
+                return new AppendableImmutableVector<T>(m_Length - 1, newShift, newRoot, (T[])pTail);
             }
         }
 
@@ -184,7 +186,7 @@ namespace PersistentVector
             return back;
         }
 
-        private object[] PushTail(int level, object[] arr, object[] tailNode, out object expansion)
+        private object[] PushTail(int level, object[] arr, T[] tailNode, out object expansion)
         {
             object newChild = null;
 
@@ -259,10 +261,10 @@ namespace PersistentVector
             {
                 for (int i1 = 0; i1 < m_Root.Length; i1++)
                 {
-                    var arr1 = (object[])m_Root[i1];
+                    var arr1 = (T[])m_Root[i1];
                     for (int i2 = 0; i2 < arr1.Length; i2++)
                     {
-                        yield return (T)arr1[i2];
+                        yield return arr1[i2];
                     }
                 }
             }
@@ -273,10 +275,10 @@ namespace PersistentVector
                     var arr1 = (object[])m_Root[i1];
                     for (int i2 = 0; i2 < arr1.Length; i2++)
                     {
-                        var arr2 = (object[])arr1[i2];
+                        var arr2 = (T[])arr1[i2];
                         for (int i3 = 0; i3 < arr2.Length; i3++)
                         {
-                            yield return (T)arr2[i3];
+                            yield return arr2[i3];
                         }
                     }
                 }
@@ -291,10 +293,10 @@ namespace PersistentVector
                         var arr2 = (object[])arr1[i2];
                         for (int i3 = 0; i3 < arr2.Length; i3++)
                         {
-                            var arr3 = (object[])arr2[i3];
+                            var arr3 = (T[])arr2[i3];
                             for (int i4 = 0; i4 < arr3.Length; i4++)
                             {
-                                yield return (T)arr3[i4];
+                                yield return arr3[i4];
                             }
                         }
                     }
@@ -313,10 +315,10 @@ namespace PersistentVector
                             var arr3 = (object[])arr2[i3];
                             for (int i4 = 0; i4 < arr3.Length; i4++)
                             {
-                                var arr4 = (object[])arr3[i4];
+                                var arr4 = (T[])arr3[i4];
                                 for (int i5 = 0; i5 < arr4.Length; i5++)
                                 {
-                                    yield return (T)arr4[i5];
+                                    yield return arr4[i5];
                                 }
                             }
                         }
@@ -339,10 +341,10 @@ namespace PersistentVector
                                 var arr4 = (object[])arr3[i4];
                                 for (int i5 = 0; i5 < arr4.Length; i5++)
                                 {
-                                    var arr5 = (object[])arr4[i5];
+                                    var arr5 = (T[])arr4[i5];
                                     for (int i6 = 0; i6 < arr5.Length; i6++)
                                     {
-                                        yield return (T)arr5[i6];
+                                        yield return arr5[i6];
                                     }
                                 }
                             }
@@ -369,10 +371,10 @@ namespace PersistentVector
                                     var arr5 = (object[])arr4[i5];
                                     for (int i6 = 0; i6 < arr5.Length; i6++)
                                     {
-                                        var arr6 = (object[])arr5[i6];
+                                        var arr6 = (T[])arr5[i6];
                                         for (int i7 = 0; i7 < arr6.Length; i7++)
                                         {
-                                            yield return (T)arr6[i7];
+                                            yield return arr6[i7];
                                         }
                                     }
                                 }
@@ -383,7 +385,7 @@ namespace PersistentVector
             }
 
             for (int i = 0; i < m_Tail.Length; i++)
-                yield return (T)m_Tail[i];
+                yield return m_Tail[i];
         }
 
         public IEnumerable<T> GetRightToLeftEnumeration()
@@ -393,16 +395,16 @@ namespace PersistentVector
             int depth = (int)Math.Ceiling(Math.Log(m_Length, 32));
 
             for (int i = m_Tail.Length - 1; i >= 0; i--)
-                yield return (T)m_Tail[i];
+                yield return m_Tail[i];
 
             if (depth == 2)
             {
                 for (int i1 = m_Root.Length - 1; i1 >= 0; i1--)
                 {
-                    var arr1 = (object[])m_Root[i1];
+                    var arr1 = (T[])m_Root[i1];
                     for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
                     {
-                        yield return (T)arr1[i2];
+                        yield return arr1[i2];
                     }
                 }
             }
@@ -413,10 +415,10 @@ namespace PersistentVector
                     var arr1 = (object[])m_Root[i1];
                     for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
                     {
-                        var arr2 = (object[])arr1[i2];
+                        var arr2 = (T[])arr1[i2];
                         for (int i3 = arr2.Length - 1; i3 >= 0; i3--)
                         {
-                            yield return (T)arr2[i3];
+                            yield return arr2[i3];
                         }
                     }
                 }
@@ -431,10 +433,10 @@ namespace PersistentVector
                         var arr2 = (object[])arr1[i2];
                         for (int i3 = arr2.Length - 1; i3 >= 0; i3--)
                         {
-                            var arr3 = (object[])arr2[i3];
+                            var arr3 = (T[])arr2[i3];
                             for (int i4 = arr3.Length - 1; i4 >= 0; i4--)
                             {
-                                yield return (T)arr3[i4];
+                                yield return arr3[i4];
                             }
                         }
                     }
@@ -453,10 +455,10 @@ namespace PersistentVector
                             var arr3 = (object[])arr2[i3];
                             for (int i4 = arr3.Length - 1; i4 >= 0; i4--)
                             {
-                                var arr4 = (object[])arr3[i4];
+                                var arr4 = (T[])arr3[i4];
                                 for (int i5 = arr4.Length - 1; i5 >= 0; i5--)
                                 {
-                                    yield return (T)arr4[i5];
+                                    yield return arr4[i5];
                                 }
                             }
                         }
@@ -479,10 +481,10 @@ namespace PersistentVector
                                 var arr4 = (object[])arr3[i4];
                                 for (int i5 = arr4.Length - 1; i5 >= 0; i5--)
                                 {
-                                    var arr5 = (object[])arr4[i5];
+                                    var arr5 = (T[])arr4[i5];
                                     for (int i6 = arr5.Length - 1; i6 >= 0; i6--)
                                     {
-                                        yield return (T)arr5[i6];
+                                        yield return arr5[i6];
                                     }
                                 }
                             }
@@ -509,10 +511,10 @@ namespace PersistentVector
                                     var arr5 = (object[])arr4[i5];
                                     for (int i6 = arr5.Length - 1; i6 >= 0; i6--)
                                     {
-                                        var arr6 = (object[])arr5[i6];
+                                        var arr6 = (T[])arr5[i6];
                                         for (int i7 = arr6.Length - 1; i7 >= 0; i7--)
                                         {
-                                            yield return (T)arr6[i7];
+                                            yield return arr6[i7];
                                         }
                                     }
                                 }
@@ -626,7 +628,7 @@ namespace PersistentVector
             var newArr = new T[m_Length + 1];
             newArr[0] = newItem;
             int i = 1;
-            foreach(var item in this)
+            foreach (var item in this)
                 newArr[i++] = item;
             return new PrependableImmutableVector<T>(newArr);
         }
@@ -717,10 +719,12 @@ namespace PersistentVector
             for (int i = 0; i < m_TailOffset; i += 32)
             {
                 var arr = m_Root;
-                for (int level = m_Shift; level > 0; level -= 5)
+                for (int level = m_Shift; level > 5; level -= 5)
                     arr = (object[])arr[(i >> level) & 0x01f];
 
-                Array.Copy(arr, 0, outArray, outputIndex, 32);
+                var leafArr = (T[])arr[(i >> 5) & 0x01f];
+
+                Array.Copy(leafArr, 0, outArray, outputIndex, 32);
 
                 outputIndex += 32;
             }
@@ -772,7 +776,7 @@ namespace PersistentVector
                 var level1Parent = new object[numLeafArrays];
                 for (int i1 = 0; i1 < numLeafArrays; i1++)
                 {
-                    var leafArray = new object[32];
+                    var leafArray = new T[32];
                     Array.Copy(items, inputIndex, leafArray, 0, 32);
                     level1Parent[i1] = leafArray;
                     inputIndex += 32;
@@ -787,7 +791,7 @@ namespace PersistentVector
                     var level1Parent = new object[i2 == numLevel1Parents - 1 ? numLeafArrays % 32 : 32];
                     for (int i1 = 0; i1 < level1Parent.Length; i1++)
                     {
-                        var leafArray = new object[32];
+                        var leafArray = new T[32];
                         Array.Copy(items, inputIndex, leafArray, 0, 32);
                         level1Parent[i1] = leafArray;
                         inputIndex += 32;
@@ -809,7 +813,7 @@ namespace PersistentVector
                         if (level1Parent.Length == 0) level1Parent = new object[32];
                         for (int i1 = 0; i1 < level1Parent.Length; i1++)
                         {
-                            var leafArray = new object[32];
+                            var leafArray = new T[32];
                             Array.Copy(items, inputIndex, leafArray, 0, 32);
                             level1Parent[i1] = leafArray;
                             inputIndex += 32;
@@ -836,7 +840,7 @@ namespace PersistentVector
                             var level1Parent = new object[i4 == numLevel3Parents - 1 && i3 == level3Parent.Length - 1 && i2 == level2Parent.Length - 1 ? (numLeafArrays - 1) % 32 + 1 : 32];
                             for (int i1 = 0; i1 < level1Parent.Length; i1++)
                             {
-                                var leafArray = new object[32];
+                                var leafArray = new T[32];
                                 Array.Copy(items, inputIndex, leafArray, 0, 32);
                                 level1Parent[i1] = leafArray;
                                 inputIndex += 32;
@@ -868,7 +872,7 @@ namespace PersistentVector
                                 var level1Parent = new object[i5 == numLevel4Parents - 1 && i4 == level4Parent.Length - 1 && i3 == level3Parent.Length - 1 && i2 == level2Parent.Length - 1 ? (numLeafArrays - 1) % 32 + 1 : 32];
                                 for (int i1 = 0; i1 < level1Parent.Length; i1++)
                                 {
-                                    var leafArray = new object[32];
+                                    var leafArray = new T[32];
                                     Array.Copy(items, inputIndex, leafArray, 0, 32);
                                     level1Parent[i1] = leafArray;
                                     inputIndex += 32;
@@ -905,7 +909,7 @@ namespace PersistentVector
                                     var level1Parent = new object[i6 == numLevel5Parents - 1 && i5 == level5Parent.Length - 1 && i4 == level4Parent.Length - 1 && i3 == level3Parent.Length - 1 && i2 == level2Parent.Length - 1 ? (numLeafArrays - 1) % 32 + 1 : 32];
                                     for (int i1 = 0; i1 < level1Parent.Length; i1++)
                                     {
-                                        var leafArray = new object[32];
+                                        var leafArray = new T[32];
                                         Array.Copy(items, inputIndex, leafArray, 0, 32);
                                         level1Parent[i1] = leafArray;
                                         inputIndex += 32;
@@ -924,7 +928,7 @@ namespace PersistentVector
                 m_Root = level6Parent;
             }
 
-            m_Tail = new object[tailLength];
+            m_Tail = new T[tailLength];
             Array.Copy(items, inputIndex, m_Tail, 0, tailLength);
 
             m_Length = items.Length;

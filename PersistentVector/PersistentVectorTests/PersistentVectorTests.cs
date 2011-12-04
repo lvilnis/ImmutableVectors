@@ -60,25 +60,25 @@ namespace PersistentVectorTests
                 }
             });
 
-            TimeWithMessage(ms => string.Format("{0}: Prepending: {1} ms", name, ms), () =>
-            {
-                for (int it = 0; it < 1; it++)
-                {
-                    var emptyVec = getVector(Enumerable.Empty<int>());
-                    foreach (var number in Enumerable.Range(1, 100000))
-                        emptyVec = emptyVec.Cons(number);
-                }
-            });
+            //TimeWithMessage(ms => string.Format("{0}: Prepending: {1} ms", name, ms), () =>
+            //{
+            //    for (int it = 0; it < 1; it++)
+            //    {
+            //        var emptyVec = getVector(Enumerable.Empty<int>());
+            //        foreach (var number in Enumerable.Range(1, 100000))
+            //            emptyVec = emptyVec.Cons(number);
+            //    }
+            //});
 
-            TimeWithMessage(ms => string.Format("{0}: Appending: {1} ms", name, ms), () =>
-            {
-                for (int it = 0; it < 1; it++)
-                {
-                    var emptyVec = getVector(Enumerable.Empty<int>());
-                    foreach (var number in Enumerable.Range(1, 100000))
-                        emptyVec = emptyVec.Append(number);
-                }
-            });
+            //TimeWithMessage(ms => string.Format("{0}: Appending: {1} ms", name, ms), () =>
+            //{
+            //    for (int it = 0; it < 1; it++)
+            //    {
+            //        var emptyVec = getVector(Enumerable.Empty<int>());
+            //        foreach (var number in Enumerable.Range(1, 100000))
+            //            emptyVec = emptyVec.Append(number);
+            //    }
+            //});
 
             var vec = getVector(Enumerable.Range(1, 100000));
 
@@ -177,7 +177,7 @@ namespace PersistentVectorTests
         [TestMethod]
         public void TestArrayBacked()
         {
-            //      TestVectorImplementation(Vector.ArrayListBacked, "ArrayListBacked");
+                 TestVectorImplementation(Vector.ArrayListBacked, "ArrayListBacked");
         }
 
         [TestMethod]
