@@ -255,7 +255,7 @@ namespace PersistentVector
         public IEnumerable<T> GetLeftToRightEnumeration()
         {
             // Specialize Enumeration to different tree heights gives a ~3x improvement over just indexing
-            int depth = (int)Math.Ceiling(Math.Log(m_Length, 32));
+            int depth = GetDepthFromLength(m_Length - m_Tail.Length);
 
             if (depth == 2)
             {
@@ -392,7 +392,7 @@ namespace PersistentVector
         {
             // Specialize Enumeration to different tree heights gives a ~3x improvement over just indexing
             // jeepers the backwards enumerator takes 134 lines of code!!
-            int depth = (int)Math.Ceiling(Math.Log(m_Length, 32));
+            int depth = GetDepthFromLength(m_Length - m_Tail.Length);
 
             for (int i = m_Tail.Length - 1; i >= 0; i--)
                 yield return m_Tail[i];
@@ -755,8 +755,8 @@ namespace PersistentVector
             // This is still a lot slower than it should be - gotta profile it and find out why...
             // FIXME this code is insanely ugly, please rewrite it to not be so damn awful
 
-            int depth = items.Length == 0 ? 1 : (int)Math.Ceiling(Math.Log(items.Length, 32));
             int tailLength = (items.Length - 1) % 32 + 1;
+            int depth = GetDepthFromLength(items.Length - tailLength);
 
             int numLeafArrays = (int)Math.Ceiling(items.Length / 32f) - 1;
             int numLevel1Parents = (int)Math.Ceiling(numLeafArrays / 32f);
@@ -767,7 +767,7 @@ namespace PersistentVector
 
             int inputIndex = 0;
 
-            if (depth < 2)
+            if (depth == 0)
             {
                 m_Root = new object[0];
             }
@@ -788,7 +788,7 @@ namespace PersistentVector
                 var level2Parent = new object[numLevel1Parents];
                 for (int i2 = 0; i2 < numLevel1Parents; i2++)
                 {
-                    var level1Parent = new object[i2 == numLevel1Parents - 1 ? numLeafArrays % 32 : 32];
+                    var level1Parent = new object[i2 == numLevel1Parents - 1 ? (numLeafArrays - 1) % 32 + 1 : 32];
                     for (int i1 = 0; i1 < level1Parent.Length; i1++)
                     {
                         var leafArray = new T[32];
@@ -937,5 +937,26 @@ namespace PersistentVector
         }
 
         #endregion
+
+        private static int GetDepthFromLength(int p)
+        {
+            const int zeroThresh = 0;
+            const int oneThresh = 32;
+            const int twoThresh = 32 << 5;
+            const int threeThresh = 32 << 10;
+            const int fourThresh = 32 << 15;
+            const int fiveThresh = 32 << 20;
+            const int sixThresh = 32 << 25;
+            const int sevenThresh = 32 << 30;
+
+            if (p <= zeroThresh) return 0;
+            if (p <= twoThresh) return 2;
+            if (p <= threeThresh) return 3;
+            if (p <= fourThresh) return 4;
+            if (p <= fiveThresh) return 5;
+            if (p <= sixThresh) return 6;
+
+            return 7;
+        }
     }
 }

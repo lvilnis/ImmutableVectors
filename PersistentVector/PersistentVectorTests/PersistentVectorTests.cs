@@ -298,39 +298,132 @@ namespace PersistentVectorTests
 
             var rnd = new Random();
             IVector<int> jumbledVec = new PrependableImmutableVector<int>(
-                Enumerable.Range(0, 1000000).OrderBy(_ => rnd.NextDouble()).ToArray());
+                Enumerable.Range(0, 100000).OrderBy(_ => rnd.NextDouble()).ToArray());
 
+            // These qsorts are slow because concat is relatively slow...
 
-            TimeWithMessage(ms => string.Format("MapPrime: {0} ms", ms), () =>
-            {
-                for (int i = 0; i < 100; i++)
-                {
-                    var sorted = MapPrime(normalVec, el => el * 3);
-                }
-            });
-
-            Func<IVector<int>, IVector<int>> qsort = null;
-            qsort = xs =>
+            Func<IVector<int>, IVector<int>> aqsort = null;
+            aqsort = xs =>
             {
                 if (xs.Length == 0) return xs;
                 var pivot = xs.End;
                 var left = xs.Popped.Filter(el => el <= pivot);
                 var right = xs.Popped.Filter(el => el > pivot);
-                return qsort(left).Concat(qsort(right));
+                return aqsort(left).Append(pivot).Concat(aqsort(right));
             };
+
+            Func<IVector<int>, IVector<int>> pqsort = null;
+            pqsort = xs =>
+            {
+                if (xs.Length == 0) return xs;
+                var pivot = xs.Head;
+                var left = xs.Tail.Filter(el => el <= pivot);
+                var right = xs.Tail.Filter(el => el > pivot);
+                return pqsort(left).Append(pivot).Concat(pqsort(right));
+            };
+
+
+            TimeWithMessage(ms => string.Format("Appendable qsort: {0} ms", ms), () =>
+            {
+                for (int i = 0; i < 1; i++)
+                {
+                    var sorted = aqsort(jumbledVec);
+                }
+            });
 
             TimeWithMessage(ms => string.Format("Prependable qsort: {0} ms", ms), () =>
             {
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < 1; i++)
                 {
-                    var sorted = qsort(jumbledVec);
+                    var sorted = pqsort(jumbledVec);
+                }
+            });
+
+            // Fibonacci numbers (use unfold??)
+
+            Func<double, double, int, IVector<double>> generateFibonacci = null;
+            generateFibonacci = (f1, f2, iter) =>
+                iter == 0
+                    ? Vector.Prependable<double>()
+                    : Cons(f2, generateFibonacci(f2, f1 + f2, iter - 1));
+
+            TimeWithMessage(ms => string.Format("Fibonacci: {0} ms", ms), () =>
+            {
+                for (int i = 0; i < 100; i++)
+                {
+                    var fibs = generateFibonacci(1, 1, 1000);
+                }
+            });
+
+            // Slow toy HOF implementations
+
+            TimeWithMessage(ms => string.Format("MapPrime: {0} ms", ms), () =>
+            {
+                for (int i = 0; i < 1; i++)
+                {
+                    var mapped = MapPrime(normalVec, el => el * 3);
+                    Assert.AreEqual(Vector.Prependable(normalVec.Select(el => el * 3).ToArray()), Vector.Prependable(mapped.ToArray()));
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("FilterPrime: {0} ms", ms), () =>
+            {
+                for (int i = 0; i < 1; i++)
+                {
+                    var filtered = FilterPrime(normalVec, el => el % 2 == 0);
+                    Assert.AreEqual(Vector.Prependable(normalVec.Where(el => el % 2 == 0).ToArray()), Vector.Prependable(filtered.ToArray()));
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("FoldlPrime: {0} ms", ms), () =>
+            {
+                for (int i = 0; i < 1; i++)
+                {
+                    var folded = FoldlPrime(normalVec, 0, (acc, el) => acc + el);
+                    Assert.AreEqual(normalVec.Aggregate(0, (acc, el) => acc + el), folded);
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("FoldrPrime: {0} ms", ms), () =>
+            {
+                for (int i = 0; i < 1; i++)
+                {
+                    var folded = FoldrPrime(normalVec, 0, (acc, el) => acc + el);
+                    Assert.AreEqual(normalVec.Aggregate(0, (acc, el) => acc + el), folded);
                 }
             });
         }
 
         private IVector<U> MapPrime<T, U>(IVector<T> vec, Func<T, U> mapper)
         {
-            return vec.Length == 0 ? new PrependableImmutableVector<U>() : MapPrime(vec.Tail, mapper).Cons(mapper(vec.Head));
+            return vec.Length == 0
+                ? Vector.Prependable<U>()
+                : Cons(mapper(vec.Head), MapPrime(vec.Tail, mapper));
         }
+
+        private IVector<T> FilterPrime<T>(IVector<T> vec, Func<T, bool> pred)
+        {
+            return vec.Length == 0
+                ? Vector.Prependable<T>()
+                : pred(vec.Head)
+                ? Cons(vec.Head, FilterPrime(vec.Tail, pred))
+                : FilterPrime(vec.Tail, pred);
+        }
+
+        private TAcc FoldlPrime<T, TAcc>(IVector<T> vec, TAcc seed, Func<T, TAcc, TAcc> accumulator)
+        {
+            return vec.Length == 0
+                ? seed
+                : FoldlPrime(vec.Tail, accumulator(vec.Head, seed), accumulator);
+        }
+
+        private TAcc FoldrPrime<T, TAcc>(IVector<T> vec, TAcc seed, Func<T, TAcc, TAcc> accumulator)
+        {
+            return vec.Length == 0
+                ? seed
+                : accumulator(vec.Head, FoldrPrime(vec.Tail, seed, accumulator));
+        }
+
+        private IVector<T> Cons<T>(T item, IVector<T> vec) { return vec.Cons(item); }
     }
 }
