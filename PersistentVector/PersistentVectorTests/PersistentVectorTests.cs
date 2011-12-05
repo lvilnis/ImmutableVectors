@@ -20,6 +20,8 @@ namespace PersistentVectorTests
             TestFastConstructors();
             TestFastToArray();
             SomeAlgorithms();
+            TestLinqStuff();
+            TestVectorProjection();
         }
 
         private void TestVectorImplementation(Func<IEnumerable<int>, IVector<int>> getVector, string name)
@@ -288,6 +290,39 @@ namespace PersistentVectorTests
                     Assert.AreEqual(resultArray.Length, vec.Length);
                 }
             });
+        }
+
+        [TestMethod]
+        public void TestLinqStuff()
+        {
+            var rnd = new Random();
+            IVector<int> jumbledVec = new PrependableImmutableVector<int>(
+                Enumerable.Range(0, 100000).OrderBy(_ => rnd.NextDouble()).ToArray());
+
+            // I'm not sure LINQ over vectors should return a vector, but let's try it out...
+
+            var justEvensVec =
+                from x in jumbledVec
+                where x % 2 == 0
+                select x;
+
+            var sortedVec =
+                from x in jumbledVec
+                orderby x descending
+                select x;
+
+            // for some reason this still gives IEnumerable and not
+            // IVector. What gives??
+            var flattened =
+                from x in jumbledVec
+                from y in Enumerable.Range(0, x).ToVector()
+                select y;
+        }
+
+        [TestMethod]
+        public void TestVectorProjection()
+        {
+            // TBD
         }
 
         [TestMethod]

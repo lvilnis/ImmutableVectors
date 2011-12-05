@@ -46,6 +46,19 @@ namespace PersistentVector
             return new ArrayListBackedVector<T>(items.ToArray());
         }
 
+        public static IVector<T> Projection<S, T>(Func<S, T> mapper, params S[] items)
+        {
+            return new VectorProjection<S, T>(Appendable(items), mapper);
+        }
+        public static IVector<T> Projection<S, T>(Func<S, T> mapper, IList<S> items)
+        {
+            return new VectorProjection<S, T>(Appendable(items.ToArray()), mapper);
+        }
+        public static IVector<T> Projection<S, T>(Func<S, T> mapper, IEnumerable<S> items)
+        {
+            return new VectorProjection<S, T>(Appendable(items.ToArray()), mapper);
+        }
+
         public static IVector<T> Deque<T>(params T[] items)
         {
             throw new NotImplementedException("I haven't used finger trees to make a deque yet! Quit hasslin' me! Note to self: use finger trees to make a deque.");
