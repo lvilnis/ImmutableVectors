@@ -59,7 +59,7 @@ namespace PersistentVector
                 if (i >= m_TailOffset)
                 {
                     var newTail = new T[m_Tail.Length];
-                    Array.Copy(m_Tail, 0, newTail, 0, m_Tail.Length);
+                    Array.Copy(m_Tail, newTail, m_Tail.Length);
                     newTail[i & 0x01f] = obj;
 
                     return new AppendableImmutableVector<T>(m_Length, m_Shift, m_Root, newTail);
@@ -76,7 +76,7 @@ namespace PersistentVector
             if (m_Tail.Length < 32)
             {
                 var newTail = new T[m_Tail.Length + 1];
-                Array.Copy(m_Tail, 0, newTail, 0, m_Tail.Length);
+                Array.Copy(m_Tail, newTail, m_Tail.Length);
                 newTail[m_Tail.Length] = obj;
 
                 return new AppendableImmutableVector<T>(m_Length + 1, m_Shift, m_Root, newTail);
@@ -109,14 +109,14 @@ namespace PersistentVector
             else if (m_Tail.Length > 1)
             {
                 var newTail = new T[m_Tail.Length - 1];
-                Array.Copy(m_Tail, 0, newTail, 0, newTail.Length);
+                Array.Copy(m_Tail, newTail, newTail.Length);
 
                 return new AppendableImmutableVector<T>(m_Length - 1, m_Shift, m_Root, newTail);
             }
             else
             {
                 object pTail;
-                var newRoot = PopTail(m_Shift - 5, m_Root, null, out pTail);
+                var newRoot = PopTail(m_Shift - 5, m_Root, out pTail);
 
                 var newShift = m_Shift;
 
@@ -135,36 +135,28 @@ namespace PersistentVector
 
         #region Private helpers
 
-        private object[] PopTail(int shift, object[] arr, object pTail, out object newPTail)
+        private object[] PopTail(int shift, object[] arr, out object pTail)
         {
-            if (shift > 0)
+            if (shift == 0)
             {
-                object subPTail;
-                var newChild = PopTail(shift - 5, (object[])arr[arr.Length - 1], pTail, out subPTail);
+                pTail = arr[arr.Length - 1];
+            }
+            else
+            {
+                var newChild = PopTail(shift - 5, (object[])arr[arr.Length - 1], out pTail);
 
                 if (newChild != null)
                 {
                     var ret = new object[arr.Length];
-                    Array.Copy(arr, 0, ret, 0, arr.Length);
+                    Array.Copy(arr, ret, arr.Length);
 
                     ret[arr.Length - 1] = newChild;
 
-                    newPTail = subPTail;
                     return ret;
                 }
-
-                newPTail = subPTail;
-            }
-            else if (shift == 0)
-            {
-                newPTail = arr[arr.Length - 1];
-            }
-            else
-            {
-                newPTail = pTail;
             }
 
-            // contraction
+            // Contraction
             if (arr.Length == 1)
             {
                 return null;
@@ -181,7 +173,7 @@ namespace PersistentVector
         private object[] NewArray(params object[] elems)
         {
             var back = new object[elems.Length];
-            Array.Copy(elems, 0, back, 0, back.Length);
+            Array.Copy(elems, back, back.Length);
 
             return back;
         }
@@ -202,7 +194,7 @@ namespace PersistentVector
                 if (subExpansion == null)
                 {
                     var ret = new object[arr.Length];
-                    Array.Copy(arr, 0, ret, 0, arr.Length);
+                    Array.Copy(arr, ret, arr.Length);
 
                     ret[arr.Length - 1] = newInnerChild;
 
@@ -213,7 +205,7 @@ namespace PersistentVector
                 newChild = subExpansion;
             }
 
-            // expansion
+            // Expansion
             if (arr.Length == 32)
             {
                 expansion = NewArray(newChild);
@@ -233,7 +225,7 @@ namespace PersistentVector
         private object[] UpdateIndex(int level, object[] arr, int i, T obj)
         {
             var ret = new object[arr.Length];
-            Array.Copy(arr, 0, ret, 0, arr.Length);
+            Array.Copy(arr, ret, arr.Length);
 
             if (level == 0)
             {
