@@ -7,8 +7,8 @@ namespace PersistentVector
 {
     public class VectorProjection<S, T> : IVector<T>
     {
-        private Func<S, T> m_MapFunction;
-        private IVector<S> m_WrappedVector;
+        private readonly Func<S, T> m_MapFunction;
+        private readonly IVector<S> m_WrappedVector;
         // Don't memoize results of map for now
         public VectorProjection(IVector<S> wrappedVector, Func<S, T> mapFunction)
         {
@@ -116,6 +116,16 @@ namespace PersistentVector
             return m_WrappedVector.Map(m_MapFunction).ToArray();
         }
 
+        T[] IVector<T>.SliceToArray(int start, int length)
+        {
+            throw new NotImplementedException();
+        }
+
+        IVector<T> IVector<T>.Slice(int start, int length)
+        {
+            throw new NotImplementedException();
+        }
+
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
             return m_WrappedVector.Select(m_MapFunction).GetEnumerator();
@@ -136,7 +146,7 @@ namespace PersistentVector
         IVector<U> IVector<T>.New<U>(params U[] items)
         {
             // punt for now...
-            return Vector.Appendable(items);
+            return m_WrappedVector.New(items);
         }
     }
 }

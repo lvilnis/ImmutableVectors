@@ -24,12 +24,17 @@ namespace PersistentVector
         IVector<T> Tail { get; }
         IVector<T> Cons(T item);
 
-        // Concatable
+        // Concatable. Need a fast version of this, really bad
         IVector<T> Concat(IEnumerable<T> items);
 
+        // "Contract" idea: if we allocate a whole new array to do an operation
+        // should we have a version of the operation that returns just the array?
+        // Also could add SliceEnumerator to efficiently grab segments
+        T[] SliceToArray(int start, int length);
+        IVector<T> Slice(int start, int length);
+        
         // HOFs and such
         // Probably can pull some/all of these out to extn methods
-        // with casts to specialize implementations for ArrayLists
         IVector<T> Filter(Func<T, bool> pred);
         IVector<U> Map<U>(Func<T, U> mapper);
         IVector<U> FlatMap<U>(Func<T, IEnumerable<U>> mapper);
@@ -46,6 +51,7 @@ namespace PersistentVector
         // same type of array as their argument...
         IVector<U> New<U>(params U[] items);
 
-        // add virtualizing Slice / Window type of vector ?
+        // NOTE: I'm probably going to have to add more memory-conservative operations
+        // or just use more virtualizing IVector implementations
     }
 }

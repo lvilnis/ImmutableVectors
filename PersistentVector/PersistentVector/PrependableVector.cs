@@ -748,6 +748,22 @@ namespace PersistentVector
             return new PrependableImmutableVector<U>(items);
         }
 
+        T[] IVector<T>.SliceToArray(int start, int length)
+        {
+            // If we had fast append _and_ prepend we could share leafarrays between copies..
+            // Add optimization for slices starting from front or back to re-use leafarrays??
+            // Good idea. Could also name this popN and skipN or something.
+            int frontLength = start % 32;
+            int backLength = length % 32;
+
+            throw new NotImplementedException();
+        }
+
+        IVector<T> IVector<T>.Slice(int start, int length)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
 
         public bool Equals(IVector<T> other)

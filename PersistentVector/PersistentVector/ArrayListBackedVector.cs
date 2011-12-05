@@ -190,5 +190,15 @@ namespace PersistentVector
         {
             return new ArrayListBackedVector<U>(items);
         }
+
+        T[] IVector<T>.SliceToArray(int start, int length)
+        {
+            throw new NotImplementedException();
+        }
+
+        IVector<T> IVector<T>.Slice(int start, int length)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
