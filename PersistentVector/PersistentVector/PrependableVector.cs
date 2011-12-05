@@ -743,6 +743,11 @@ namespace PersistentVector
             return outArray;
         }
 
+        IVector<U> IVector<T>.New<U>(params U[] items)
+        {
+            return new PrependableImmutableVector<U>(items);
+        }
+
         #endregion
 
         public bool Equals(IVector<T> other)

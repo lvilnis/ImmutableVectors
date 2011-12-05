@@ -296,7 +296,7 @@ namespace PersistentVectorTests
         public void TestLinqStuff()
         {
             var rnd = new Random();
-            IVector<int> jumbledVec = new PrependableImmutableVector<int>(
+            var jumbledVec = Vector.Prependable(
                 Enumerable.Range(0, 100000).OrderBy(_ => rnd.NextDouble()).ToArray());
 
             // I'm not sure LINQ over vectors should return a vector, but let's try it out...
@@ -311,10 +311,9 @@ namespace PersistentVectorTests
                 orderby x descending
                 select x;
 
-            // for some reason this still gives IEnumerable and not
-            // IVector. What gives??
             var flattened =
                 from x in jumbledVec
+                where x < 100
                 from y in Enumerable.Range(0, x).ToVector()
                 select y;
         }
@@ -328,11 +327,11 @@ namespace PersistentVectorTests
         [TestMethod]
         public void SomeAlgorithms()
         {
-            IVector<int> normalVec = new PrependableImmutableVector<int>(
+            var normalVec = Vector.Prependable(
                 Enumerable.Range(0, 1000).ToArray());
 
             var rnd = new Random();
-            IVector<int> jumbledVec = new PrependableImmutableVector<int>(
+            var jumbledVec = Vector.Prependable(
                 Enumerable.Range(0, 100000).OrderBy(_ => rnd.NextDouble()).ToArray());
 
             // These qsorts are slow because concat is relatively slow...
@@ -371,6 +370,22 @@ namespace PersistentVectorTests
                 for (int i = 0; i < 1; i++)
                 {
                     var sorted = pqsort(jumbledVec);
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("Overidden linq sort: {0} ms", ms), () =>
+            {
+                for (int i = 0; i < 1; i++)
+                {
+                    var sorted = jumbledVec.OrderBy(el => el);
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("Default sort extn: {0} ms", ms), () =>
+            {
+                for (int i = 0; i < 1; i++)
+                {
+                    var sorted = jumbledVec.OrderBy();
                 }
             });
 

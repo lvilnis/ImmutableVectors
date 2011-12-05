@@ -42,79 +42,10 @@ namespace PersistentVector
 
         T[] FastToArray();
 
-        // need to add Slice / Window
-    }
+        // Kind of weird little hack so we can make xtn methods return
+        // same type of array as their argument...
+        IVector<U> New<U>(params U[] items);
 
-    public static class VectorLinqExtensionOverloads
-    {
-        // WARNING: Using vectors with LINQ will evaluate strictly unlike with IEnumerable
-        // Also, we still need a VectorProjection class that lazily maps vector elements
-
-        public static IVector<U> Select<T, U>(this IVector<T> vec, Func<T, U> mapper)
-        {
-            return vec.Map(mapper);
-        }
-
-        public static IVector<U> SelectMany<T, U>(this IVector<T> vec, Func<T, IVector<U>> mapper)
-        {
-            return vec.FlatMap(mapper);
-        }
-
-        public static IVector<T> Where<T>(this IVector<T> vec, Func<T, bool> pred)
-        {
-            return vec.Filter(pred);
-        }
-
-        public static IVector<T> OrderBy<T, U>(this IVector<T> vec, Func<T, U> keySelector)
-        {
-            var elements = vec.ToArray();
-            var keys = vec.Map(keySelector).ToArray();
-            Array.Sort(keys, elements);
-            return Vector.Appendable(elements);
-        }
-
-        public static IVector<T> OrderByDescending<T, U>(this IVector<T> vec, Func<T, U> keySelector)
-        {
-            var elements = vec.ToArray();
-            var keys = vec.Map(keySelector).ToArray();
-            Array.Sort(keys, elements);
-            Array.Reverse(elements);
-            return Vector.Appendable(elements);
-        }
-
-        public static IEnumerable<T> Reverse<T>(this IVector<T> vec)
-        {
-            return vec.FastRightToLeftEnumeration;
-        }
-
-        public static T[] ToArray<T>(this IVector<T> vec)
-        {
-            return vec.FastToArray();
-        }
-
-        public static IList<T> ToList<T>(this IVector<T> vec)
-        {
-            return new List<T>(vec.FastToArray());
-        }
-
-        // Probably don't need to implement first and single...
-
-        public static T FirstOrDefault<T>(this IVector<T> vec)
-        {
-            return vec.Length > 0 ? vec.Head : default(T);
-        }
-
-        public static T SingleOrDefault<T>(this IVector<T> vec)
-        {
-            return vec.Length == 1 ? vec.Head : default(T);
-        }
-    }
-
-    public static class VectorExtensions
-    {
-        public static IVector<T> ToVector<T>(this IEnumerable<T> items)
-        {
-            return Vector.Appendable(items.ToArray());
-        }
+        // add virtualizing Slice / Window type of vector ?
     }
 }

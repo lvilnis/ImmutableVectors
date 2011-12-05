@@ -185,5 +185,10 @@ namespace PersistentVector
         {
             return m_List.ToArray();
         }
+
+        IVector<U> IVector<T>.New<U>(params U[] items)
+        {
+            return new ArrayListBackedVector<U>(items);
+        }
     }
 }

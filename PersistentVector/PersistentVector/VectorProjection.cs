@@ -132,5 +132,11 @@ namespace PersistentVector
             // through the map. Seems like a good case for memoizing or something....
             return m_WrappedVector.Map(m_MapFunction).Equals(other);
         }
+
+        IVector<U> IVector<T>.New<U>(params U[] items)
+        {
+            // punt for now...
+            return Vector.Appendable(items);
+        }
     }
 }
