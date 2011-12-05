@@ -108,7 +108,7 @@ namespace PersistentVector
 
         public static T LastOrDefault<T>(this IVector<T> vec)
         {
-            return vec.Length > 0 ? vec.Head : default(T);
+            return vec.Length > 0 ? vec.End : default(T);
         }
 
         public static T FirstOrDefault<T>(this IVector<T> vec)
