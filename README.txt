@@ -4,7 +4,7 @@
  This library aims to provide an immutable data structure which offers fast put/get to arbitrary indices,
  and fast append/concat to either front or back (versions of the data structure offering fast both prepend/append,
  and cheap slicing, are in the works). It is very much a work in progress, but (modulo a small bug or two) 
- is already very fast and useful - the basic data structure is a nearly  line-for-line clone of Clojure's 
+ is already very fast and useful - the basic data structure is a nearly line-for-line clone of Clojure's 
  PersistentVector data structure, but with several enhancements:
   
   - Typed leaf arrays (.NET-only, and led to a 4x speedup on some of my integer-based benchmarks - YMMV)
