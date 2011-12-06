@@ -59,20 +59,20 @@
  - Make a "deque" version: There are a few ways of going about this, I'd like to experiment with all of them:
   - Two copies of the vector (root + tail) data structure -  a "left" one and a "right" one. The right one works 
     like the normal vector and fills in the trie left-to-right, the left one is a reversed version and fills in 
-	the trie right-to-left. New items are prepended to the left trie and appended to the right. If the vector is
-	tail'd or pop'd enough times to empty either the left or right trie, we divide the still-full trie "in half" 
-	(keep all leaf arrays and create all new internal nodes), and set the two halves as the new left and right 
-	nodes.
+    the trie right-to-left. New items are prepended to the left trie and appended to the right. If the vector is
+    tail'd or pop'd enough times to empty either the left or right trie, we divide the still-full trie "in half" 
+    (keep all leaf arrays and create all new internal nodes), and set the two halves as the new left and right 
+    nodes.
   - Make an asymmetrical version with semi-fast prepend. We have the normal vector root+tail structure, but with 
     an extra "left tail" array. We fill the array in right-to-left, and once every 32 prepends we push the 
-	"left tail" down into the data structure, and have to copy *all* of the non-leaf arrays. This is very similar
-	to the shared-slicing idea above, and is probably just the continuation of that same line of reasoning. Related
-	to the item below, I've looked at Scala's Vector a little and while I didn't catch everything that's going on,
-	I think this is something like what they do.
+    "left tail" down into the data structure, and have to copy *all* of the non-leaf arrays. This is very similar
+    to the shared-slicing idea above, and is probably just the continuation of that same line of reasoning. Related
+    to the item below, I've looked at Scala's Vector a little and while I didn't catch everything that's going on,
+    I think this is something like what they do.
   - Copy Scala's Vector data structure. I've looked at the code a bit and it seems to be really piggish with 
     memory for small vector sizes, due to the maintenance of 6 different "display" pointers, but it may be that
-	the above ideas have fatal flaws and that the Scala implementation works better (they certainly know a lot more
-	about data structures than I do!). I've only looked at it briefly and definitely didn't get everything that 
-	was going on (I	have trouble reading excessive bit-operations), but I wouldn't be surprised if it actually uses 
-	some of the above ideas. AFAIK we both started with Rich Hickey's 32-wide array-of-arrays and I might just reach
-	some of the same conclusions they did.
+    the above ideas have fatal flaws and that the Scala implementation works better (they certainly know a lot more
+    about data structures than I do!). I've only looked at it briefly and definitely didn't get everything that 
+    was going on (I	have trouble reading excessive bit-operations), but I wouldn't be surprised if it actually uses 
+    some of the above ideas. AFAIK we both started with Rich Hickey's 32-wide array-of-arrays and I might just reach
+    some of the same conclusions they did.
