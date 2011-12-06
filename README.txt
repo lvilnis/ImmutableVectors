@@ -12,7 +12,7 @@
   - Fast forward and backward enumerators
   - Fast copy from/to array (turning an array into a vector can be even faster than copying to another array for 
     1 million+ element arrays, due to the difficulty of allocating huge contiguous blocks of memory vs. 32-wide
-	blocks)
+    blocks)
   - A VectorProjection wrapper that provides lazy mapping, with deforesting optimizations such as map fusion and
     map/fold fusion
   - Specialized implementations of many commonly used utility functions and LINQ operators
