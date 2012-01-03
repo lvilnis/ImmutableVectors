@@ -214,7 +214,7 @@ namespace PersistentVectorTests
             //Assert.AreEqual(vec1, vec2);
 
             var arr = Enumerable.Range(1, 1000000).ToArray();
-            TimeWithMessage(ms => string.Format("Fast Constructor: {0}", ms), () =>
+            TimeWithMessage(ms => string.Format("Fast Constructor (appendable): {0}", ms), () =>
             {
                 for (int i = 0; i < 10; i++)
                 {
@@ -222,11 +222,27 @@ namespace PersistentVectorTests
                 }
             });
 
-            TimeWithMessage(ms => string.Format("Slow Constructor: {0}", ms), () =>
+            TimeWithMessage(ms => string.Format("Fast Constructor (deque): {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var vec = new DequeVector<int>(arr);
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("Slow Constructor (appendable): {0}", ms), () =>
             {
                 for (int i = 0; i < 10; i++)
                 {
                     var vec = new AppendableImmutableVector<int>().Concat(arr);
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("Slow Constructor (deque): {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var vec = new DequeVector<int>().Concat(arr);
                 }
             });
 
@@ -263,25 +279,25 @@ namespace PersistentVectorTests
             // must be because the little bite-sized arrays are easier to deal with than
             // one giant one... that's fucking crazy, this data structure is boss...
 
-            // test depth of 1
-            IVector<int> vec1 = new DequeVector<int>(Enumerable.Range(0, 12).ToArray());
-            Assert.AreEqual(vec1.ToArray().Length, 12);
+            //// test depth of 1
+            //IVector<int> vec1 = new DequeVector<int>(Enumerable.Range(0, 12).ToArray());
+            //Assert.AreEqual(vec1.ToArray().Length, 12);
 
-            // test depth of 2
-            IVector<int> vec2 = new DequeVector<int>(Enumerable.Range(0, 120).ToArray());
-            Assert.AreEqual(vec2.ToArray().Length, 120);
+            //// test depth of 2
+            //IVector<int> vec2 = new DequeVector<int>(Enumerable.Range(0, 120).ToArray());
+            //Assert.AreEqual(vec2.ToArray().Length, 120);
 
-            // test depth of 3
-            IVector<int> vec3 = new DequeVector<int>(Enumerable.Range(0, 1200).ToArray());
-            Assert.AreEqual(vec3.ToArray().Length, 1200);
+            //// test depth of 3
+            //IVector<int> vec3 = new DequeVector<int>(Enumerable.Range(0, 1200).ToArray());
+            //Assert.AreEqual(vec3.ToArray().Length, 1200);
 
-            // test depth of 4
-            IVector<int> vec4 = new DequeVector<int>(Enumerable.Range(0, 40000).ToArray());
-            Assert.AreEqual(vec4.ToArray().Length, 40000);
+            //// test depth of 4
+            //IVector<int> vec4 = new DequeVector<int>(Enumerable.Range(0, 40000).ToArray());
+            //Assert.AreEqual(vec4.ToArray().Length, 40000);
 
-            // test depth of 5
-            IVector<int> vec5 = new DequeVector<int>(Enumerable.Range(0, 1200000).ToArray());
-            Assert.AreEqual(vec5.ToArray().Length, 1200000);
+            //// test depth of 5
+            //IVector<int> vec5 = new DequeVector<int>(Enumerable.Range(0, 1200000).ToArray());
+            //Assert.AreEqual(vec5.ToArray().Length, 1200000);
 
             //// test depth of 6
             //IVector<int> vec6 = new AppendableImmutableVector<int>(Enumerable.Range(0, 40000000).ToArray());
@@ -297,7 +313,7 @@ namespace PersistentVectorTests
         {
             IVector<int> vec = new AppendableImmutableVector<int>(Enumerable.Range(0, 1000000).ToArray());
 
-            TimeWithMessage(ms => string.Format("Fast ToArray: {0}", ms), () =>
+            TimeWithMessage(ms => string.Format("Fast ToArray (appendable): {0}", ms), () =>
             {
                 for (int i = 0; i < 10; i++)
                 {
@@ -306,12 +322,32 @@ namespace PersistentVectorTests
                 }
             });
 
-            TimeWithMessage(ms => string.Format("Slow ToArray: {0}", ms), () =>
+            TimeWithMessage(ms => string.Format("Slow ToArray (appendable): {0}", ms), () =>
             {
                 for (int i = 0; i < 10; i++)
                 {
                     var resultArray = vec.ToArray();
                     Assert.AreEqual(resultArray.Length, vec.Length);
+                }
+            });
+
+            IVector<int> vec2 = new DequeVector<int>(Enumerable.Range(0, 1000000).ToArray());
+
+            TimeWithMessage(ms => string.Format("Fast ToArray (deque): {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var resultArray = vec2.FastToArray();
+                    Assert.AreEqual(resultArray.Length, vec2.Length);
+                }
+            });
+
+            TimeWithMessage(ms => string.Format("Slow ToArray (deque): {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    var resultArray = vec2.ToArray();
+                    Assert.AreEqual(resultArray.Length, vec2.Length);
                 }
             });
         }

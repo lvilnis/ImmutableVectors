@@ -52,7 +52,7 @@ namespace PersistentVector
             }
         }
 
-        private IEnumerable<T[]> GetLeftToRightBodyBlockEnumeration() // this returns lefttail, inner blocks, righttail
+        private IEnumerable<T[]> GetLeftToRightBodyBlockEnumeration()
         {
             int depth = GetDepthFromLength(m_Length - m_LeftTail.Length - m_RightTail.Length);
 
@@ -284,6 +284,20 @@ namespace PersistentVector
             var newBodyBlocks = m_LeftTail.Length > 0 ? bodyBlocks : bodyBlocks.Skip(1);
             return new DequeVector<T>(newLeftTail, newBodyBlocks, m_RightTail, m_Length - 1);
         }
+
+        #region Collection functions
+
+        public DequeVector<T> Concat(IEnumerable<T> items)
+        {
+            // should make a dedicated Concat routine that avoids some of the
+            // repeated copy-on-writes since those intermediate results are never seen
+            var currentVector = this;
+            foreach (var item in items)
+                currentVector = currentVector.Append(item);
+            return currentVector;
+        }
+
+        #endregion
 
         #region Private helpers
 
@@ -707,12 +721,7 @@ namespace PersistentVector
 
         IVector<T> IVector<T>.Concat(IEnumerable<T> items)
         {
-            // should make a dedicated Concat routine that avoids some of the
-            // repeated copy-on-writes since those intermediate results are never seen
-            var currentVector = (IVector<T>)this;
-            foreach (var item in items)
-                currentVector = currentVector.Append(item);
-            return currentVector;
+            return this.Concat(items);
         }
 
         T[] IVector<T>.SliceToArray(int start, int length)
