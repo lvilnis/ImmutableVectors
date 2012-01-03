@@ -52,15 +52,9 @@ namespace PersistentVector
             }
         }
 
-        // All the normal operations work the same as before, with idx - m_LeftTail.Length
-        // except if update happens in the left tail, which we do with copy-on write
-
         private IEnumerable<T[]> GetLeftToRightBodyBlockEnumeration() // this returns lefttail, inner blocks, righttail
         {
-            // Specialize Enumeration to different tree heights gives a ~3x improvement over just indexing
             int depth = GetDepthFromLength(m_Length - m_LeftTail.Length - m_RightTail.Length);
-
-            //   yield return m_LeftTail;
 
             if (depth == 2)
             {
@@ -152,13 +146,9 @@ namespace PersistentVector
                     }
                 }
             }
-
-            //    yield return m_RightTail;
         }
 
-        // member to make the prependable version work actually for real and fill right-to-left instead of storing things
-        // in reversed order, so that we can share data between appendable and prependable without copying anything but the intermediate nodes
-
+        // FIXME this didnt work for a while and we let it slip.... need better tests of update!!
         public IVector<T> Update(int i, T obj)
         {
             if (i >= 0 && i < m_Length)
@@ -175,12 +165,12 @@ namespace PersistentVector
                 {
                     var newTail = new T[m_LeftTail.Length];
                     Array.Copy(m_LeftTail, newTail, m_LeftTail.Length);
-                    newTail[i & 0x01f] = obj;
+                    newTail[i] = obj;
 
                     return new DequeVector<T>(m_Length, m_Shift, m_Root, newTail, m_RightTail);
                 }
 
-                return new DequeVector<T>(m_Length, m_Shift, UpdateIndex(m_Shift, m_Root, i, obj), m_LeftTail, m_RightTail);
+                return new DequeVector<T>(m_Length, m_Shift, UpdateIndex(m_Shift, m_Root, i - m_LeftTail.Length, obj), m_LeftTail, m_RightTail);
             }
 
             throw new Exception("Index out of bounds!");
@@ -783,21 +773,290 @@ namespace PersistentVector
             return currentValue;
         }
 
-        private IEnumerable<T> GetLeftToRightEnumeration()
+        #region Ugly giant inlined fast enumerations :(
+
+        public IEnumerable<T> GetLeftToRightEnumeration()
         {
-            foreach (var item in m_LeftTail)
-                yield return item;
-            foreach (var block in GetLeftToRightBodyBlockEnumeration())
-                foreach (var item in block)
-                    yield return item;
-            foreach (var item in m_RightTail)
-                yield return item;
+            // Specialize Enumeration to different tree heights gives a ~3x improvement over just indexing
+            int depth = GetDepthFromLength(m_Length - m_LeftTail.Length - m_RightTail.Length);
+
+            for (int i = 0; i < m_LeftTail.Length; i++)
+                yield return m_LeftTail[i];
+
+            if (depth == 2)
+            {
+                for (int i1 = 0; i1 < m_Root.Length; i1++)
+                {
+                    var arr1 = (T[])m_Root[i1];
+                    for (int i2 = 0; i2 < arr1.Length; i2++)
+                    {
+                        yield return arr1[i2];
+                    }
+                }
+            }
+            else if (depth == 3)
+            {
+                for (int i1 = 0; i1 < m_Root.Length; i1++)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = 0; i2 < arr1.Length; i2++)
+                    {
+                        var arr2 = (T[])arr1[i2];
+                        for (int i3 = 0; i3 < arr2.Length; i3++)
+                        {
+                            yield return arr2[i3];
+                        }
+                    }
+                }
+            }
+            else if (depth == 4)
+            {
+                for (int i1 = 0; i1 < m_Root.Length; i1++)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = 0; i2 < arr1.Length; i2++)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = 0; i3 < arr2.Length; i3++)
+                        {
+                            var arr3 = (T[])arr2[i3];
+                            for (int i4 = 0; i4 < arr3.Length; i4++)
+                            {
+                                yield return arr3[i4];
+                            }
+                        }
+                    }
+                }
+            }
+            else if (depth == 5)
+            {
+                for (int i1 = 0; i1 < m_Root.Length; i1++)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = 0; i2 < arr1.Length; i2++)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = 0; i3 < arr2.Length; i3++)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = 0; i4 < arr3.Length; i4++)
+                            {
+                                var arr4 = (T[])arr3[i4];
+                                for (int i5 = 0; i5 < arr4.Length; i5++)
+                                {
+                                    yield return arr4[i5];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (depth == 6)
+            {
+                for (int i1 = 0; i1 < m_Root.Length; i1++)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = 0; i2 < arr1.Length; i2++)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = 0; i3 < arr2.Length; i3++)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = 0; i4 < arr3.Length; i4++)
+                            {
+                                var arr4 = (object[])arr3[i4];
+                                for (int i5 = 0; i5 < arr4.Length; i5++)
+                                {
+                                    var arr5 = (T[])arr4[i5];
+                                    for (int i6 = 0; i6 < arr5.Length; i6++)
+                                    {
+                                        yield return arr5[i6];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (depth == 7)
+            {
+                for (int i1 = 0; i1 < m_Root.Length; i1++)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = 0; i2 < arr1.Length; i2++)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = 0; i3 < arr2.Length; i3++)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = 0; i4 < arr3.Length; i4++)
+                            {
+                                var arr4 = (object[])arr3[i4];
+                                for (int i5 = 0; i5 < arr4.Length; i5++)
+                                {
+                                    var arr5 = (object[])arr4[i5];
+                                    for (int i6 = 0; i6 < arr5.Length; i6++)
+                                    {
+                                        var arr6 = (T[])arr5[i6];
+                                        for (int i7 = 0; i7 < arr6.Length; i7++)
+                                        {
+                                            yield return arr6[i7];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < m_RightTail.Length; i++)
+                yield return m_RightTail[i];
         }
 
-        private IEnumerable<T> GetRightToLeftEnumeration()
+        public IEnumerable<T> GetRightToLeftEnumeration()
         {
-            return GetLeftToRightEnumeration().Reverse();
+            // Specialize Enumeration to different tree heights gives a ~3x improvement over just indexing
+            // jeepers the backwards enumerator takes 134 lines of code!!
+            int depth = GetDepthFromLength(m_Length - m_LeftTail.Length - m_RightTail.Length);
+
+            for (int i = m_RightTail.Length - 1; i >= 0; i--)
+                yield return m_RightTail[i];
+
+            if (depth == 2)
+            {
+                for (int i1 = m_Root.Length - 1; i1 >= 0; i1--)
+                {
+                    var arr1 = (T[])m_Root[i1];
+                    for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
+                    {
+                        yield return arr1[i2];
+                    }
+                }
+            }
+            else if (depth == 3)
+            {
+                for (int i1 = m_Root.Length - 1; i1 >= 0; i1--)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
+                    {
+                        var arr2 = (T[])arr1[i2];
+                        for (int i3 = arr2.Length - 1; i3 >= 0; i3--)
+                        {
+                            yield return arr2[i3];
+                        }
+                    }
+                }
+            }
+            else if (depth == 4)
+            {
+                for (int i1 = m_Root.Length - 1; i1 >= 0; i1--)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = arr2.Length - 1; i3 >= 0; i3--)
+                        {
+                            var arr3 = (T[])arr2[i3];
+                            for (int i4 = arr3.Length - 1; i4 >= 0; i4--)
+                            {
+                                yield return arr3[i4];
+                            }
+                        }
+                    }
+                }
+            }
+            else if (depth == 5)
+            {
+                for (int i1 = m_Root.Length - 1; i1 >= 0; i1--)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = arr2.Length - 1; i3 >= 0; i3--)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = arr3.Length - 1; i4 >= 0; i4--)
+                            {
+                                var arr4 = (T[])arr3[i4];
+                                for (int i5 = arr4.Length - 1; i5 >= 0; i5--)
+                                {
+                                    yield return arr4[i5];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (depth == 6)
+            {
+                for (int i1 = m_Root.Length - 1; i1 >= 0; i1--)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = arr2.Length - 1; i3 >= 0; i3--)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = arr3.Length - 1; i4 >= 0; i4--)
+                            {
+                                var arr4 = (object[])arr3[i4];
+                                for (int i5 = arr4.Length - 1; i5 >= 0; i5--)
+                                {
+                                    var arr5 = (T[])arr4[i5];
+                                    for (int i6 = arr5.Length - 1; i6 >= 0; i6--)
+                                    {
+                                        yield return arr5[i6];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (depth == 7)
+            {
+                for (int i1 = m_Root.Length - 1; i1 >= 0; i1--)
+                {
+                    var arr1 = (object[])m_Root[i1];
+                    for (int i2 = arr1.Length - 1; i2 >= 0; i2--)
+                    {
+                        var arr2 = (object[])arr1[i2];
+                        for (int i3 = arr2.Length - 1; i3 >= 0; i3--)
+                        {
+                            var arr3 = (object[])arr2[i3];
+                            for (int i4 = arr3.Length - 1; i4 >= 0; i4--)
+                            {
+                                var arr4 = (object[])arr3[i4];
+                                for (int i5 = arr4.Length - 1; i5 >= 0; i5--)
+                                {
+                                    var arr5 = (object[])arr4[i5];
+                                    for (int i6 = arr5.Length - 1; i6 >= 0; i6--)
+                                    {
+                                        var arr6 = (T[])arr5[i6];
+                                        for (int i7 = arr6.Length - 1; i7 >= 0; i7--)
+                                        {
+                                            yield return arr6[i7];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (int i = m_LeftTail.Length - 1; i >= 0; i--)
+                yield return m_LeftTail[i];
         }
+
+
+
+        #endregion
 
         T IVector<T>.Reduce(Func<T, T, T> accumulator)
         {
@@ -836,7 +1095,29 @@ namespace PersistentVector
 
         T[] IVector<T>.FastToArray()
         {
-            return this.GetLeftToRightEnumeration().ToArray();
+            var outArray = new T[m_Length];
+            int outputIndex = 0;
+
+            Array.Copy(m_LeftTail, 0, outArray, 0, m_LeftTail.Length);
+            outputIndex += m_LeftTail.Length;
+
+            for (int i = 0; i < m_Length - m_RightTail.Length - m_LeftTail.Length; i += 32)
+            {
+                
+                var arr = m_Root;
+                for (int level = m_Shift; level > 5; level -= 5)
+                    arr = (object[])arr[(i >> level) & 0x01f];
+
+                var leafArr = (T[])arr[(i >> 5) & 0x01f];
+
+                Array.Copy(leafArr, 0, outArray, outputIndex, 32);
+
+                outputIndex += 32;
+            }
+
+            Array.Copy(m_RightTail, 0, outArray, outputIndex, m_RightTail.Length);
+
+            return outArray;
         }
 
         IVector<U> IVector<T>.New<U>(params U[] items)
