@@ -61,15 +61,16 @@ namespace PersistentVector
 
         public static IVector<T> Deque<T>(params T[] items)
         {
-            throw new NotImplementedException("I haven't used finger trees to make a deque yet! Quit hasslin' me! Note to self: use finger trees to make a deque.");
+            return new DequeVector<T>(items);
         }
         public static IVector<T> Deque<T>(IList<T> items)
         {
-            throw new NotImplementedException("I haven't used 2-3 finger trees to make a deque yet! Quit hasslin' me! Note to self: use 2-3 finger trees to make a deque.");
+            return new DequeVector<T>(items);
         }
         public static IVector<T> Deque<T>(IEnumerable<T> items)
         {
-            throw new NotImplementedException("I haven't used 2-3 finger trees to make a deque yet! Quit hasslin' me! Note to self: use 2-3 finger trees to make a deque.");
+            return new DequeVector<T>(items);
+
         }
     }
 }

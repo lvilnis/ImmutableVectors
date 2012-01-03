@@ -130,6 +130,7 @@ namespace PersistentVectorTests
         {
             IVector<int> vec1 = new AppendableImmutableVector<int>(Enumerable.Range(0, 1000000).ToArray());
             IVector<int> vec2 = new PrependableImmutableVector<int>(Enumerable.Range(0, 1000000).ToArray());
+            IVector<int> vec3 = new DequeVector<int>(Enumerable.Range(0, 1000000).ToArray());
 
             TimeWithMessage(ms => string.Format("Map (appendable): {0}", ms), () =>
             {
@@ -144,6 +145,14 @@ namespace PersistentVectorTests
                 for (int i = 0; i < 10; i++)
                 {
                     vec2.Map(el => el * 3 - 45 + 3 * 26);
+                }
+            }); 
+            
+            TimeWithMessage(ms => string.Format("Map (deque): {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    vec3.Map(el => el * 3 - 45 + 3 * 26);
                 }
             });
 
@@ -162,6 +171,21 @@ namespace PersistentVectorTests
                     vec2.Filter(el => el % 2 == 0);
                 }
             });
+
+            TimeWithMessage(ms => string.Format("Filter (deque): {0}", ms), () =>
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    vec3.Filter(el => el % 2 == 0);
+                }
+            });
+
+        }
+
+        [TestMethod]
+        public void TestDeque()
+        {
+            TestVectorImplementation(Vector.Deque, "Deque");
         }
 
         [TestMethod]
@@ -240,23 +264,23 @@ namespace PersistentVectorTests
             // one giant one... that's fucking crazy, this data structure is boss...
 
             // test depth of 1
-            IVector<int> vec1 = new AppendableImmutableVector<int>(Enumerable.Range(0, 12).ToArray());
+            IVector<int> vec1 = new DequeVector<int>(Enumerable.Range(0, 12).ToArray());
             Assert.AreEqual(vec1.ToArray().Length, 12);
 
             // test depth of 2
-            IVector<int> vec2 = new AppendableImmutableVector<int>(Enumerable.Range(0, 120).ToArray());
+            IVector<int> vec2 = new DequeVector<int>(Enumerable.Range(0, 120).ToArray());
             Assert.AreEqual(vec2.ToArray().Length, 120);
 
             // test depth of 3
-            IVector<int> vec3 = new AppendableImmutableVector<int>(Enumerable.Range(0, 1200).ToArray());
+            IVector<int> vec3 = new DequeVector<int>(Enumerable.Range(0, 1200).ToArray());
             Assert.AreEqual(vec3.ToArray().Length, 1200);
 
             // test depth of 4
-            IVector<int> vec4 = new AppendableImmutableVector<int>(Enumerable.Range(0, 40000).ToArray());
+            IVector<int> vec4 = new DequeVector<int>(Enumerable.Range(0, 40000).ToArray());
             Assert.AreEqual(vec4.ToArray().Length, 40000);
 
             // test depth of 5
-            IVector<int> vec5 = new AppendableImmutableVector<int>(Enumerable.Range(0, 1200000).ToArray());
+            IVector<int> vec5 = new DequeVector<int>(Enumerable.Range(0, 1200000).ToArray());
             Assert.AreEqual(vec5.ToArray().Length, 1200000);
 
             //// test depth of 6

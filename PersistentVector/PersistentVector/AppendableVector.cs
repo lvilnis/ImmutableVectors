@@ -765,7 +765,6 @@ namespace PersistentVector
 
         public AppendableImmutableVector(T[] items)
         {
-            // This is still a lot slower than it should be - gotta profile it and find out why...
             // FIXME this code is insanely ugly, please rewrite it to not be so damn awful
 
             int tailLength = (items.Length - 1) % 32 + 1;
